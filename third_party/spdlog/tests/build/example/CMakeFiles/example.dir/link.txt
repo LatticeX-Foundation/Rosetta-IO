@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -rdynamic CMakeFiles/example.dir/example.cpp.o -o example  -Wl,-rpath,/home/leaker/Desktop/tmp/Rosetta0712/cc/third_party/spdlog-1.6.1/build ../libspdlog.so -lpthread 

@@ -1,0 +1,18 @@
+# Copyright(c) 2019 spdlog authors Distributed under the MIT License (http://opensource.org/licenses/MIT)
+cmake_minimum_required(VERSION 3.2)
+project(spdlog VERSION ${SPDLOG_VERSION} LANGUAGES CXX)
+
+message(STATUS "spdlog CMakeLists.txt")
+
+# Library
+include_directories(${CMAKE_SOURCE_DIR}/include)
+#set(SPDLOG_SRCS src/spdlog.cpp src/stdout_sinks.cpp src/color_sinks.cpp src/file_sinks.cpp src/async.cpp src/cfg.cpp src/loggers.cpp src/logger_stream.cpp)
+file(GLOB_RECURSE LIB_SOURCE_FILES "src/*.cpp")
+set_source_files_properties(${LIB_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "${PEDANTIC_COMPILE_FLAGS}")
+add_library(spdlog SHARED ${LIB_HEADER_FILES})
+target_compile_definitions(spdlog PUBLIC SPDLOG_SHARED_LIB)
+target_include_directories(spdlog PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(spdlog ${LINKLIBS})
+set_target_properties(spdlog PROPERTIES FOLDER "spdlog"
+    APPEND_STRING PROPERTY LINK_FLAGS " ${ADD_LINK_LIB_FLAGS}")
+list(APPEND LINKLIBS spdlog)
