@@ -25,7 +25,7 @@ $ make -j${core_num} && make install
 ```
 
 
-### EXAMPLE
+### Example
   Here we give a example to demostrate how to use Rosetta-IO.
   Support three parties, called P0, P1 and P2, need to compare their config file on network topology. They may write the following program to finish this task.(check_config_json.cpp)
 ```cpp
@@ -166,9 +166,9 @@ $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
 $ cd Rosetta-IO
 $ mkdir -p build
 $ cd build
-$ export install=~/.local/rosetta-io
+$ export install_path=~/.local/rosetta-io
 $ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path} 
-$ core_num = $(nproc)
+$ core_num=$(nproc)
 $ make -j${core_num} && make install
 $ cd ../example
 $ g++ check_config_json.cpp -o check_config_json -I${install_path}/include -L${install_path}/lib -lio -Wl,-rpath=${install_path}/lib

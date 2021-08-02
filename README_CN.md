@@ -166,7 +166,7 @@ $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
 $ cd Rosetta-IO
 $ mkdir -p build
 $ cd build
-$ export install=~/.local/rosetta-io
+$ export install_path=~/.local/rosetta-io
 $ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path}
 $ core_num=$(nproc)
 $ make -j${core_num} && make install
