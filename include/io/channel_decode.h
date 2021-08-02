@@ -21,6 +21,7 @@
 #include <vector>
 #include <map>
 #include "io/channel.h"
+using namespace std;
 
 /**
  * @brief decode C string to C++ standard string

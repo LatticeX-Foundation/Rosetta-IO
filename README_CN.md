@@ -2,18 +2,18 @@
 
 --------------------------------------------------------------------------------
 
-[中文版](./README_CN.md)
+[English Edition](./README.md)
 
-## Overview
-  Rosetta-IO is a building block of Rosetta, providing IO service for Rosetta. Once the channel in Rosetta-IO  is created, it is available to send/receive messages from other nodes. In Rosetta-IO, `NODE` identified by `NODE ID`, is a endpoint of a TCP connection. Each node has unique `(HOST, PORT)` tuple where `HOST` is a `IP ADDRESS` or `DOMAIN NAME` and `PORT` is a `TCP LISTENING PORT`.
+## 概述
+  Rosetta-IO是Rosetta的一个基础组件，对Rosetta提供IO服务。Rosetta-IO中的通道一旦被建立，就能够发送数据给其它节点或者从其它节点接收数据。在Rosetta-IO，`节点`通过`节点ID`来区分，它是TCP连接的一端。每个节点都有全局的`(主机, 端口)`元组，`主机`是`IP地址`或者`域名`，`端口`是TCP监听端口。
   
-  Rosetta-IO supports `MULTI DATA SOURCE`. It defines three roles, called `DATA ROLE`, `COMPUTATION ROLE` and `RESULT ROLE`. `DATA ROLE` denotes that inputing data/module from the node is legal. Nodes, owning `COMPUTATION ROLE`, can participate in `PRIVACY COMPUTATION`. The results of `PRIVACY COMPUTATION` can only be stored on nodes with `RESULT ROLE`. Each node can have one or more roles. Rosetta-IO establishes network topoloy according to the roles of nodes. Three subnetworks, namely `INPUT NETWORK`, `COMPUTATION NETWORK` and `OUTPUT NETWORK`, will be built. `INPUT NETWORK` consists of nodes owning `DATA ROLE` and/or `COMPUTATION ROLE`. All of the nodes in `COMPUTATION NETWORK` have `COMPUTATION ROLE`. Nodes with `COMPUTATION ROLE` and nodes with `RESULT_ROLE` establish `OUTPUT NETWORK` together.
+  Rosetta-IO支持`多数据源`。它定义了节点的3种角色，分别是`数据角色`，`计算角色`和`结果角色`。`数据角色`意味着节点输入数据或者模型是合法的。拥有`计算角色`的节点可以参与`隐私计算`。`隐私计算`的结果只能存储在`结果节点`。每个节点可以有一种或者更多种角色。Rosetta-IO根据节点角色建立网络拓扑结构。网络拓扑结构由3个子网络构成，即`输入网络`，`计算网络`，`输出网络`。`输入网络`由`数据节点`和`计算节点`组成，`计算网络`由`计算节点`组成，`输出网络`由`计算节点`和`结果节点`组成。
 
-  Rosetta-IO supports `MULTI TASKING`. The term `CHANNEL` refers to a task level handler. Every interface provided is based on a specific task. In Rosetta-IO, the connection between any two nodes is reused inter-task and there is only one connection between any two nodes.
+  Rosetta-IO支持`多任务`。其中的`通道`是任务基本的句柄，每个接口都是基于一个具体任务的。在Rosetta-IO，节点之间创建的网络连接在任务之间是复用的，任何两个节点之间建立的网络连接都只有一条。
 
 
-## Compile & Install
-  Follow the belowing procedures to compile and install Rosetta-IO
+## 编译和安装
+  按照以下步骤编译和安装Rosetta-IO
 ```bash
 $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
 $ cd Rosetta-IO
@@ -24,9 +24,9 @@ $ make && make install
 ```
 
 
-### EXAMPLE
-  Here we give a example to demostrate how to use Rosetta-IO.
-  Support three parties, called P0, P1 and P2, need to compare their config file on network topology. They may write the following program to finish this task.(check_config_json.cpp)
+### 示例
+  这里给出一个示例来展示Rosetta-IO的使用方法。
+  假设用三方，分别是P0, P1和P2，需要比较他们的网络拓扑配置文件。他们可能写如下的程序来完成这项工作。(check_config_json.cpp)
 ```cpp
 #include <stdio.h>
 #include <string.h>
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 ``` 
-P0 and P1 use the following config file, named p0p1.json.
+P0和P1使用下面的配置文件，即p0p1.json。
 ```json
 {
     "NODE_INFO": [
@@ -117,7 +117,7 @@ P0 and P1 use the following config file, named p0p1.json.
     ]
 }
 ```
-P2 uses the follow config file, named p2.config.
+P2使用下面的配置文件，即p2.json。
 ```json
 {
     "NODE_INFO": [
@@ -157,8 +157,8 @@ P2 uses the follow config file, named p2.config.
     ]
 }
 ```
-The only difference between the two config files is that `NAME` of P2 in p0p1.json is `PartyC(P2)` while `NAME` of P2 in p2.json is `(P2)`.
-The three parties follow the belowing procedures to install rosetta-io and generate program `check_config_json`.
+这两个文件的唯一差别是在p0p1.json中P2的`NAME`是`PartyC(P2)`，而在p2.json中P2的`NAME`是`(P2)`。
+这三方按照以下的步骤安装rosetta-io和生成程序`check_config_json`。
 ```bash
 #install_path
 $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
@@ -166,31 +166,31 @@ $ cd Rosetta-IO
 $ mkdir -p build
 $ cd build
 $ export install=~/.local/rosetta-io
-$ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path} 
+$ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path}
 $ make && make install
 $ cd ../example
 $ g++ check_config_json.cpp -o check_config_json -I${install_path}/include -L${install_path}/lib -lio -Wl,-rpath=${install_path}/lib
 ```
 
-Next, the three parties start their program respectively.
-Here is what P0 does.
+接下来，这三方各自独立启动程序。
+P0如下启动。
 ```bash
 $ ./check_config_json p0p1.json P0
 ```
 
-Here is what P1 does.
+P1如下启动。
 ```bash
 $ ./check_config_json p0p1.json P1
 ```
 
-Here is what P2 does.
+P2如下启动。
 ```bash
 $ ./check_config_json p2.json P2
 ```
 
 
-The three parties get different results from their console terminals.
-Here is what P0 gets.
+这三方将在控制终端得到不同的运行结果。
+以下是P0得到的结果。
 ```bash
 send data to P1
 send data to P2
@@ -198,7 +198,7 @@ recv data from P1, size:716
 recv data from P2, size:710
 ```
 
-Here is what P1 gets.
+以下是P1得到的结果。
 ```bash
 send data to P0
 send data to P2
@@ -206,7 +206,7 @@ recv data from P0, size:716
 recv data from P2, size:710
 ```
 
-Here is what P2 gets
+以下是P2得到的结果。
 ```bash
 send data to P0
 send data to P1
@@ -215,5 +215,5 @@ recv data from P1, size:716
 ```
 
 
-## Document List
-* [Rosetta-IO User API](./doc/API_DOC.md)
+## 文档列表
+* [Rosetta-IO用户API](./doc/API_DOC_CN.md)
