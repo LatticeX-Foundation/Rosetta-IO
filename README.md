@@ -13,14 +13,15 @@
 
 
 ## Compile & Install
-  Follow the belowing procedures to compile and install Rosetta-IO
+  Follow the steps below to compile and install Rosetta-IO
 ```bash
 $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
 $ cd Rosetta-IO
 $ export install_path=~/.local/rosetta-io
 $ mkdir -p build && cd build
 $ cmake ../ -DCMAK_INSTALL_PREFIX=${install_path}
-$ make && make install
+$ core_num=$(nproc)
+$ make -j${core_num} && make install
 ```
 
 
@@ -158,7 +159,7 @@ P2 uses the follow config file, named p2.config.
 }
 ```
 The only difference between the two config files is that `NAME` of P2 in p0p1.json is `PartyC(P2)` while `NAME` of P2 in p2.json is `(P2)`.
-The three parties follow the belowing procedures to install rosetta-io and generate program `check_config_json`.
+The three parties follow the steps below to install rosetta-io and generate program `check_config_json`.
 ```bash
 #install_path
 $ git clone --recurse https://github.com/LatticeX-Foundation/Rosetta-IO.git
@@ -167,7 +168,8 @@ $ mkdir -p build
 $ cd build
 $ export install=~/.local/rosetta-io
 $ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path} 
-$ make && make install
+$ core_num = $(nproc)
+$ make -j${core_num} && make install
 $ cd ../example
 $ g++ check_config_json.cpp -o check_config_json -I${install_path}/include -L${install_path}/lib -lio -Wl,-rpath=${install_path}/lib
 ```

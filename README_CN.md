@@ -20,7 +20,8 @@ $ cd Rosetta-IO
 $ export install_path=~/.local/rosetta-io
 $ mkdir -p build && cd build
 $ cmake ../ -DCMAK_INSTALL_PREFIX=${install_path}
-$ make && make install
+$ core_num=$(nproc)
+$ make -j${core_num} && make install
 ```
 
 
@@ -167,7 +168,8 @@ $ mkdir -p build
 $ cd build
 $ export install=~/.local/rosetta-io
 $ cmake ../ -DCMAKE_INSTALL_PREFIX=${install_path}
-$ make && make install
+$ core_num=$(nproc)
+$ make -j${core_num} && make install
 $ cd ../example
 $ g++ check_config_json.cpp -o check_config_json -I${install_path}/include -L${install_path}/lib -lio -Wl,-rpath=${install_path}/lib
 ```
