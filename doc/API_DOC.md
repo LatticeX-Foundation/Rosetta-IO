@@ -54,10 +54,10 @@
 - **`RESULT_NODES`**: containing all the `NODE_ID` of all the nodes owing `RESULT_ROLE`.
 
 
-## INTERFACE INTRODUCTION
+## Interface Introduction
   All the interfaces provided are C functions. To pass values, serveral C struct are defined. Let us have a look at the structs.
 
-### C STRUCTS
+### C Structs
 
 #### NodeIDVec
 ```cpp
@@ -94,7 +94,7 @@ The struct stores the node id and its corresponding party id, just as map in C++
 
 
 Next, we will introduce C functions
-### C FUNCTIONS
+### C Functions
 #### CreateInternalChannel
 ```cpp
 IChannel* CreateInternalChannel(const char* task_id, 
