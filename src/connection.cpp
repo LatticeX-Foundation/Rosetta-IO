@@ -71,6 +71,17 @@ ssize_t Connection::send(const string& id, const char* data, uint64_t length, in
   return put_into_send_buffer((const char*)buffer.data(), buffer.len(), timeout);
 }
 
+int Connection::get_unrecv_size() {
+  int ret = buffer_->size();
+  {
+    unique_lock<mutex> lck(mapbuffer_mtx_);
+    for (auto iter = mapbuffer_.begin(); iter != mapbuffer_.end(); iter++) {
+      ret += iter->second->size();
+    }
+  }
+  return ret;
+}
+
 void Connection::loop_recv(string task_id) {
   log_debug << task_id << " begin loop recv data from " << node_id_;
   while (true) {
@@ -254,6 +265,9 @@ void Connection::start(const string& task_id) {
   {
     std::unique_lock<std::mutex> lck(task_mtx_);
     task_count_++;
+    string id = "lock:" + task_id;
+    string msg = "1";
+    send(id, msg.data(), msg.size(), -1);
   }
   std::thread *start_thread = new std::thread();
   *start_thread = thread(&Connection::do_start, this, task_id);
@@ -278,6 +292,10 @@ void Connection::stop(const string& task_id) {
   {
     std::unique_lock<std::mutex> lck(task_mtx_);
     task_count_--;
+
+    string id = "lock:" + task_id;
+    string msg = "1";
+    recv(id, &msg[0], msg.size(), -1);
   }
   do_stop(task_id);
   log_info << task_id << " end stop connection with " << node_id_;

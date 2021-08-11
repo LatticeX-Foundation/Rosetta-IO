@@ -66,11 +66,19 @@ bool TCPServer::put_connection(const string& node_id) {
 shared_ptr<Connection> TCPServer::find_connection(const string& cid) {
   unique_lock<mutex> lck(connections_mtx_);
   auto iter = connections_.find(cid);
-  if (iter == connections_.end()) {
+  if (iter == connections_.end() || !iter->second->is_reuseable()) {
     return nullptr;
   }
   iter->second->start(task_id_);
   return iter->second;
+}
+int TCPServer::get_unrecv_size() {
+  unique_lock<mutex> lck(connections_mtx_);
+  int ret = 0;
+  for (auto iter = connections_.begin(); iter != connections_.end(); iter++) {
+    ret += iter->second->get_unrecv_size();
+  }
+  return ret;
 }
 
 //#define EPOLL_EVENTS (EPOLLIN | EPOLLERR)
@@ -472,7 +480,7 @@ bool TCPServer::stop() {
   {
     std::unique_lock<std::mutex> lck(task_mtx_);
     task_count_--;
-    if (task_count_ == 0) {
+    if (task_count_ == 0 && get_unrecv_size() == 0) {
       std::unique_lock<std::mutex> lck(connections_mtx_);
       for (auto& c : connections_) {
         if (c.second != nullptr) {

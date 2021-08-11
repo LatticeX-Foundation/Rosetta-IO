@@ -213,6 +213,14 @@ bool TCPClient::connect(int64_t timeout) {
   return false;
 }
 
+int TCPClient::get_unrecv_size() {
+  int ret = 0;
+  for (auto iter = connections_.begin(); iter != connections_.end(); iter++) {
+    ret += iter->second->get_unrecv_size();
+  }
+  return ret;
+}
+
 void TCPClient::close() {
   if (connected_) {
     connected_ = false;
@@ -229,7 +237,7 @@ void TCPClient::close() {
       // uses this connection. P2 will keep the connection as T2 still use the connection.
       // thirdly, P1 start task T2 and create a new connection C2 to P2 as there is no connection available.
       // now the problem comes in.P1 send/recv data on connection C2 while P2 send/recv data on connection C1.
-      if (task_count_ == 0) {
+      if (task_count_ == 0 && get_unrecv_size() == 0) {
         for (auto iter = connections_.begin(); iter != connections_.end(); ) {
           iter->second->close(task_id_);
           connections_.erase(iter++);

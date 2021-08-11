@@ -76,6 +76,7 @@ struct Connection {
   bool is_reuseable() {
     return reuseable_;
   }
+  int get_unrecv_size();
 
 private:
   void start_recv();

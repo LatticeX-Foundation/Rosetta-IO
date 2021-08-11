@@ -59,6 +59,7 @@ class TCPServer : public Socket {
   void setwtimo(int64_t wait_timeout) { wait_timeout_ = wait_timeout; }
   bool put_connection(const string& node_id);
   shared_ptr<Connection> get_connection(const string& node_id);
+  static int get_unrecv_size();
 
  protected:
   shared_ptr<Connection> find_connection(const string& cid);
