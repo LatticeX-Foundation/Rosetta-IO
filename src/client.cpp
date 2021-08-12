@@ -246,6 +246,7 @@ void TCPClient::close() {
           iter = recycle_connections_.erase(iter);
         }
         to_connect_set_.clear();
+        log_debug << "client stopped";
       }
     }
   }
