@@ -54,7 +54,7 @@
 
 
 ## 接口简介
-  所有的接口都是以C函数的方式提供。为了传递参数，定义了几个C结构体。接下来将先介绍C结构体。
+  为了传递参数，定义了几个C结构体。接下来将先介绍C结构体。
 
 ### C结构体
 
@@ -126,28 +126,28 @@ void DestroyInternalChannel(IChannel* channel);
 
 #### Send/Recv
 ```cpp
-  int64_t Send(IChannel* channel, const char* node_id, 
+  int64_t Send(const char* node_id, 
                const char* data_id, const char* data, 
                uint64_t length, int64_t timeout=-1);
-  int64_t Recv(IChannel* channel, const char* node_id, 
+  int64_t Recv(const char* node_id, 
                const char* data_id, char* data, 
                uint64_t length, int64_t timeout=-1);
 ```
 这两个函数用来发送消息给其它节点或者从其它节点接收消息。
-- **channel**, 通道句柄，`CreateInternalChannel`的返回值。
 - **node_id**, 节点的`节点ID`，消息将被发送给该节点，或者将从该节点接收数据。
 - **data_id**, 数据ID
 - **data**, 用来发送或者接收数据的缓冲区
 - **length**, 缓冲区大小
 - **timeout**, 发送数据或者接收数据的超时时间
 
+### C++函数
 #### GetCurrentNodeID/GetDataNodeIDs/GetComputationNodeIDs/GetResultNodeIDs/GetConnectionNodeIDs
 ```cpp
-  const char* GetCurrentNodeID(IChannel* channel);
-  const NodeIDVec* GetDataNodeIDs(IChannel* channel);
-  const NodeIDMap* GetComputationNodeIDs(IChannel* channel);
-  const NodeIDVec* GetResultNodeIDs(IChannel* channel);
-  const NodeIDVec* GetConnectedNodeIDs(IChannel* channel);
+  const char* GetCurrentNodeID();
+  const NodeIDVec* GetDataNodeIDs();
+  const NodeIDMap* GetComputationNodeIDs();
+  const NodeIDVec* GetResultNodeIDs();
+  const NodeIDVec* GetConnectedNodeIDs();
 ```
 - **GetCurrentNodeID**, 获取当前节点的`节点ID`
 - **GetDataNodeIDs**, 获取所有拥有`数据角色`的节点的`节点ID`
@@ -155,6 +155,7 @@ void DestroyInternalChannel(IChannel* channel);
 - **GetResultNodeIDs**, 获取所有拥有`结果角色`的节点的`节点ID`
 - **GetConnectedNodeIDs**, 获取所有与当前节点建立网络连接的节点的`节点ID`
 
+### 编码和解码函数
 #### string/vector/map encode/decode
 ```cpp
 const char* encode_string(const string& str);

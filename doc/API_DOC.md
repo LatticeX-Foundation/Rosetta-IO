@@ -55,7 +55,7 @@
 
 
 ## Interface Introduction
-  All the interfaces provided are C functions. To pass values, serveral C struct are defined. Let us have a look at the structs.
+  To pass values, serveral C structs are defined. Let us have a look at the structs.
 
 ### C Structs
 
@@ -123,19 +123,19 @@ This function is used to create a task level Channel. `IChannel` is a channel ha
 void DestroyInternalChannel(IChannel* channel);
 ```
 This function is used to destroy a task level channel.
-- **channel**, channel handler, returned by CreateInternalChannel, is to be destroy.
+- **channel**, channel handler, returned by CreateInternalChannel, is to be destroyed.
 
+### C++ Interface
 #### Send/Recv
 ```cpp
-  int64_t Send(IChannel* channel, const char* node_id, 
+  int64_t Send(const char* node_id, 
                const char* data_id, const char* data, 
                uint64_t length, int64_t timeout=-1);
-  int64_t Recv(IChannel* channel, const char* node_id, 
+  int64_t Recv(const char* node_id, 
                const char* data_id, char* data, 
                uint64_t length, int64_t timeout=-1);
 ```
 The two functions are used to send/receive messages to/from other nodes.
-- **channel**, channel handler, returned by CreateInternalChannel.
 - **node_id**, NODE\_ID of NODE, to which data will be sent to, or from which data will be received.
 - **data_id**, identity of data
 - **data**, the buffer to send data or receive data
@@ -144,11 +144,11 @@ The two functions are used to send/receive messages to/from other nodes.
 
 #### GetCurrentNodeID/GetDataNodeIDs/GetComputationNodeIDs/GetResultNodeIDs/GetConnectionNodeIDs
 ```cpp
-  const char* GetCurrentNodeID(IChannel* channel);
-  const NodeIDVec* GetDataNodeIDs(IChannel* channel);
-  const NodeIDMap* GetComputationNodeIDs(IChannel* channel);
-  const NodeIDVec* GetResultNodeIDs(IChannel* channel);
-  const NodeIDVec* GetConnectedNodeIDs(IChannel* channel);
+  const char* GetCurrentNodeID();
+  const NodeIDVec* GetDataNodeIDs();
+  const NodeIDMap* GetComputationNodeIDs();
+  const NodeIDVec* GetResultNodeIDs();
+  const NodeIDVec* GetConnectedNodeIDs();
 ```
 - **GetCurrentNodeID**, get NODE\_ID of the current node
 - **GetDataNodeIDs**, get NODE\_IDs of nodes owning DATA\_ROLE
@@ -156,6 +156,7 @@ The two functions are used to send/receive messages to/from other nodes.
 - **GetResultNodeIDs**, get NODE\_IDs of nodes owning RESULT\_ROLE
 - **GetConnectedNodeIDs**, get NODE\_IDs of nodes which have established connection with the current node
 
+### Encode & Decode Functions
 #### string/vector/map encode/decode
 ```cpp
 const char* encode_string(const string& str);
