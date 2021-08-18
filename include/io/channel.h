@@ -18,11 +18,12 @@
 
 #pragma once
 #include <stdint.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-class IChannel;
+#include <string>
+#include <vector>
+#include <map>
+#include <functional>
+#include <cstdint>
+using namespace std;
 /**
  * @brief error_callback definition
  * @param current_node_id the node id of current node
@@ -57,20 +58,26 @@ typedef struct {
    NodeIDPair **pairs;
 } NodeIDMap;
 
+typedef void(*error_callback)(const char*, const char*, int, const char*, void*);
+
+/// Channel interface definition
+/// the functionality is sending a message to peer and 
+/// receiving a message from peer
+class IChannel {
+public:
+  virtual ~IChannel() {};
 
    /**
    * @brief Set error callback for error handle.
-   * @param channel Channel Handler
    * @param error_cb error callback to handle error.
    * @note Should set callback from python to c++, Rosetta internal should not set error callback.
   */
-  void SetErrorCallback(IChannel* channel, error_callback error_cb);
+  virtual void SetErrorCallback(error_callback error_cb)= 0;
 
   /**
    * @brief Recv receive a message from message queue， for the target node (blocking for timeout microseconds, default waiting forever)
-   * @param channel Channel Handler
    * @param node_id target node id for message receiving.
-   * @param data_id identity of a message, could be a task id or message id.
+   * @param id identity of a message, could be a task id or message id.
    * @param data buffer to receive a message.
    * @param length data length expect to receive
    * @param timeout timeout to receive a message.
@@ -79,13 +86,12 @@ typedef struct {
    *  0 if peer is disconnected  
    *  -1 if it gets a exception or error
   */
-  int64_t Recv(IChannel* channel, const char* node_id, const char* data_id, char* data, uint64_t length, int64_t timeout=-1);
+  virtual int64_t Recv(const char* node_id, const char* id, char* data, uint64_t length, int64_t timeout=-1) = 0;
 
   /**
    * @brief Send send a message to target node
-   * @param channel Channel Handler
    * @param node_id target node id for message receiving
-   * @param data_id identity of a message, could be a task id or message id.
+   * @param id identity of a message, could be a task id or message id.
    * @param data buffer to send
    * @param length data length expect to send
    * @param timeout timeout to receive a message.
@@ -93,48 +99,42 @@ typedef struct {
    *  return length of data has been sent if send a message successfully
    *  -1 if gets exceptions or error
   */
-  int64_t Send(IChannel* channel, const char* node_id, const char* data_id, const char* data, uint64_t length, int64_t timeout=-1);
+  virtual int64_t Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout=-1) = 0;
 
   /**
    * @brief get node id of all the data nodes
-   * @param channel Channel Handler
    * @return
    * return node id of all the data nodes
   */
-  const NodeIDVec* GetDataNodeIDs(IChannel* channel);
+ virtual const NodeIDVec* GetDataNodeIDs() = 0;
 
   /**
    * @brief get node id and party id of all the computation nodes
-   * @param channel Channel Handler
    * @return
    * return node id and party id of all the computation nodes
-   * string  indicates node id and int indicates party id
+   * 
   */
-  const NodeIDMap* GetComputationNodeIDs(IChannel* channel);
+  virtual const NodeIDMap* GetComputationNodeIDs() = 0;
 
   /**
    * @brief get node id of all the result nodes
-   * @param channel Channel Handler
    * @return
    * return node id of all the result nodes
   */
-  const NodeIDVec* GetResultNodeIDs(IChannel* channel);
+  virtual const NodeIDVec* GetResultNodeIDs() = 0;
   /**
    * @brief get node id of the current node
-   * @param channel Channel Handler
    * @return
    * return node id of the current node
   */
-  const char* GetCurrentNodeID(IChannel* channel);
+  virtual const char* GetCurrentNodeID() = 0;
 
   /**
    * @brief get node id of all the nodes establishing connection with the current node
-   * @param channel Channel Handler
    * @return
    * return node id of all the nodes establishing connection with the current node
   */
-  const NodeIDVec* GetConnectedNodeIDs(IChannel* channel);
+  virtual const NodeIDVec* GetConnectedNodeIDs() = 0;
+};// IChannel
 
-#ifdef __cplusplus
-}
-#endif
+

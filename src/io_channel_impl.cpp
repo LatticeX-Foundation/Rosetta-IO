@@ -63,23 +63,23 @@ ssize_t TCPChannel::Send(const char* node_id, const char* id, const char* data, 
   return _net_io->send(node_id, data, length, get_binary_string(id), timeout);
 }
 
-const vector<string>& TCPChannel::GetDataNodeIDs() {
+const vector<string>& TCPChannel::getDataNodeIDs() {
   return config_->data_nodes_;
 }
 
-const map<string, int>& TCPChannel::GetComputationNodeIDs() {
+const map<string, int>& TCPChannel::getComputationNodeIDs() {
   return config_->compute_nodes_;
 }
 
-const vector<string>& TCPChannel::GetResultNodeIDs() {
+const vector<string>& TCPChannel::getResultNodeIDs() {
   return config_->result_nodes_;
 }
 
-const string& TCPChannel::GetCurrentNodeID() {
+const string& TCPChannel::getCurrentNodeID() {
   return node_id_;
 }
 
-const vector<string>& TCPChannel::GetConnectedNodeIDs() {
+const vector<string>& TCPChannel::getConnectedNodeIDs() {
   return connected_nodes_;
 }
 

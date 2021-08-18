@@ -22,7 +22,6 @@
 #include "io/internal/io_channel_impl.h"
 #include "string.h"
 #include <mutex>
-#include "io/internal/channel_interface.h"
 #include "io/channel_encode.h"
 using namespace std;
 map<IChannel*, const char*> g_current_node_map;
@@ -257,48 +256,8 @@ IChannel* CreateInternalChannel(const char* task_id, const char* node_id, const 
   return CreateChannel(task_id, node_info, clientInfos, serverInfos, error_cb, config);
 }
 
- /**
- * @brief Set error callback for error handle.
- * @param channel Channel Handler
- * @param error_cb error callback to handle error.
- * @note Should set callback from python to c++, Rosetta internal should not set error callback.
-*/
-void SetErrorCallback(IChannel* channel, error_callback error_cb) {
-  channel->SetErrorCallback(error_cb);
-}
-
-/**
- * @brief Recv receive a message from message queue， for the target node (blocking for timeout microseconds, default waiting forever)
- * @param channel Channel Handler
- * @param node_id target node id for message receiving.
- * @param id identity of a message, could be a task id or message id.
- * @param data buffer to receive a message.
- * @param length data length expect to receive
- * @param timeout timeout to receive a message.
- * @return 
- *  return message length if receive a message successfully
- *  0 if peer is disconnected  
- *  -1 if it gets a exception or error
-*/
-int64_t Recv(IChannel* channel, const char* node_id, const char* id, char* data, uint64_t length, int64_t timeout) {
-  return channel->Recv(node_id, id, data, length, timeout);
-}
-
-/**
- * @brief Send send a message to target node
- * @param channel Channel Handler
- * @param node_id target node id for message receiving
- * @param id identity of a message, could be a task id or message id.
- * @param data buffer to send
- * @param length data length expect to send
- * @param timeout timeout to receive a message.
- * @return 
- *  return length of data has been sent if send a message successfully
- *  -1 if gets exceptions or error
-*/
-int64_t Send(IChannel* channel, const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout) {
-  return channel->Send(node_id, id, data, length, timeout);
-}
+namespace rosetta {
+namespace io {
 
 /**
  * @brief get node id of all the data nodes
@@ -306,12 +265,12 @@ int64_t Send(IChannel* channel, const char* node_id, const char* id, const char*
  * @return
  * return node id of all the data nodes
 */
-const NodeIDVec* GetDataNodeIDs(IChannel* channel) {
+const NodeIDVec* TCPChannel::GetDataNodeIDs() {
   std::unique_lock<std::mutex> lck(g_data_node_mutex);
-  auto iter = g_data_node_map.find(channel);
+  auto iter = g_data_node_map.find(this);
   if ( iter == g_data_node_map.end()) {
-    const NodeIDVec* nodes = encode_vector(channel->GetDataNodeIDs());
-    g_data_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(channel, nodes));
+    const NodeIDVec* nodes = encode_vector(getDataNodeIDs());
+    g_data_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(this, nodes));
     return nodes;
   }
   return iter->second;
@@ -324,12 +283,12 @@ const NodeIDVec* GetDataNodeIDs(IChannel* channel) {
  * return node id and party id of all the computation nodes
  * string  indicates node id and int indicates party id
 */
-const NodeIDMap* GetComputationNodeIDs(IChannel* channel) {
+const NodeIDMap* TCPChannel::GetComputationNodeIDs() {
   std::unique_lock<std::mutex> lck(g_computation_node_mutex);
-  auto iter = g_computation_node_map.find(channel);
+  auto iter = g_computation_node_map.find(this);
   if ( iter == g_computation_node_map.end()) {
-    const NodeIDMap* nodes = encode_map(channel->GetComputationNodeIDs());
-    g_computation_node_map.insert(std::pair<IChannel*, const NodeIDMap*>(channel, nodes));
+    const NodeIDMap* nodes = encode_map(getComputationNodeIDs());
+    g_computation_node_map.insert(std::pair<IChannel*, const NodeIDMap*>(this, nodes));
     return nodes;
   }
   return iter->second;
@@ -341,12 +300,12 @@ const NodeIDMap* GetComputationNodeIDs(IChannel* channel) {
  * @return
  * return node id of all the result nodes
 */
-const NodeIDVec* GetResultNodeIDs(IChannel* channel) {
+const NodeIDVec* TCPChannel::GetResultNodeIDs() {
   std::unique_lock<std::mutex> lck(g_result_node_mutex);
-  auto iter = g_result_node_map.find(channel);
+  auto iter = g_result_node_map.find(this);
   if ( iter == g_result_node_map.end()) {
-    const NodeIDVec* nodes = encode_vector(channel->GetResultNodeIDs());
-    g_result_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(channel, nodes));
+    const NodeIDVec* nodes = encode_vector(getResultNodeIDs());
+    g_result_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(this, nodes));
     return nodes;
   }
   return iter->second;
@@ -357,12 +316,12 @@ const NodeIDVec* GetResultNodeIDs(IChannel* channel) {
  * @return
  * return node id of the current node
 */
-const char* GetCurrentNodeID(IChannel* channel) {
+const char* TCPChannel::GetCurrentNodeID() {
   std::unique_lock<std::mutex> lck(g_current_node_mutex);
-  auto iter = g_current_node_map.find(channel);
+  auto iter = g_current_node_map.find(this);
   if ( iter == g_current_node_map.end()) {
-    const char* nodes = encode_string(channel->GetCurrentNodeID());
-    g_current_node_map.insert(std::pair<IChannel*, const char*>(channel, nodes));
+    const char* nodes = encode_string(getCurrentNodeID());
+    g_current_node_map.insert(std::pair<IChannel*, const char*>(this, nodes));
     return nodes;
   }
   return iter->second;
@@ -374,14 +333,17 @@ const char* GetCurrentNodeID(IChannel* channel) {
  * @return
  * return node id of all the nodes establishing connection with the current node
 */
-const NodeIDVec* GetConnectedNodeIDs(IChannel* channel) {
+const NodeIDVec* TCPChannel::GetConnectedNodeIDs() {
   std::unique_lock<std::mutex> lck(g_connected_node_mutex);
-  auto iter = g_connected_node_map.find(channel);
+  auto iter = g_connected_node_map.find(this);
   if ( iter == g_connected_node_map.end()) {
-    const NodeIDVec* nodes = encode_vector(channel->GetConnectedNodeIDs());
-    g_connected_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(channel, nodes));
+    const NodeIDVec* nodes = encode_vector(getConnectedNodeIDs());
+    g_connected_node_map.insert(std::pair<IChannel*, const NodeIDVec*>(this, nodes));
     return nodes;
   }
   return iter->second;
 }
+
+} // namespace io
+} // namespace rosetta
 
