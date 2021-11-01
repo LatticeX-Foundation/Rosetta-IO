@@ -40,7 +40,6 @@ static char get_char(char c1, char c2) {
 }
 
 static string get_binary_string(const string& str) {
-  return str;
   string ret;
   ret.resize(str.size() / 2);
   for (int i = 0; i < str.size(); i += 2) {

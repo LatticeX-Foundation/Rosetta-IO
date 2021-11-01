@@ -196,7 +196,8 @@ void TCPServer::handle_accept(Connection* conn) {
     return;
   }
 
-  log_debug << "server accept from client cid:" << cid  ;
+  log_audit << "recv node id:" << cid << " len:" << cid_len;
+  log_debug << "server accept from client cid:" << cid;
 
   set_sendbuf(cfd, default_buffer_size());
   set_recvbuf(cfd, default_buffer_size());

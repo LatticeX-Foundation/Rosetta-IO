@@ -163,7 +163,7 @@ bool TCPClient::connect(int64_t timeout) {
 
     string tmpcid;
     int32_t cid_len = sizeof(int32_t) + cid_.size();
-    log_debug << "cid connect to :" << cid_ << " len:" << cid_len ;
+    log_audit << "send node id:" << cid_ << " len:" << cid_len;
     tmpcid.resize(cid_len);
     memcpy(&tmpcid[0], &cid_len, sizeof(int32_t));
     memcpy((char*)&tmpcid[0] + sizeof(int32_t), cid_.data(), cid_.size());

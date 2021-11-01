@@ -67,7 +67,7 @@ ssize_t Connection::put_into_send_buffer(const char* data, size_t len, int64_t t
 
 ssize_t Connection::send(const string& id, const char* data, uint64_t length, int64_t timeout) {
   simple_buffer buffer(id, data, length);
-  log_debug << node_id_ << " send buffer:" << id << " len:" << buffer.len();
+  //log_debug << node_id_ << " send buffer:" << id << " len:" << buffer.len();
   return put_into_send_buffer((const char*)buffer.data(), buffer.len(), timeout);
 }
 
@@ -330,7 +330,7 @@ ssize_t Connection::recv(const string& id, char* data, uint64_t length, int64_t 
           return true;
         }
       }
-      log_debug << node_id_ << " not find mapbuffer, begin wait "<< id;
+      //log_debug << node_id_ << " not find mapbuffer, begin wait "<< id;
       return false;
     });
     ret = buffer->read(data, length);
