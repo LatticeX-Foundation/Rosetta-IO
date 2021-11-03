@@ -71,8 +71,8 @@ ssize_t Connection::send(const string& id, const char* data, uint64_t length, in
   return put_into_send_buffer((const char*)buffer.data(), buffer.len(), timeout);
 }
 
-int Connection::get_unrecv_size() {
-  int ret = buffer_->size();
+uint64_t Connection::get_unrecv_size() {
+  uint64_t ret = buffer_->size();
   {
     unique_lock<mutex> lck(mapbuffer_mtx_);
     for (auto iter = mapbuffer_.begin(); iter != mapbuffer_.end(); iter++) {
@@ -116,7 +116,7 @@ void Connection::loop_recv(string task_id) {
       }
       // write the real data
       mapbuffer_[tmp_id]->write(tmp_data.data(), tmp_data.size());
-      log_debug << node_id_ << " write to mapbuffer, id:" << tmp_id << " size:" << tmp_data.size();
+      //log_debug << node_id_ << " write to mapbuffer, id:" << tmp_id << " size:" << tmp_data.size();
       mapbuffer_cv_.notify_all();
     }
   }
@@ -124,7 +124,7 @@ void Connection::loop_recv(string task_id) {
 }
 
 void Connection::flush_send_buffer() {
-  int remain_size = send_buffer_->size();
+  uint64_t remain_size = send_buffer_->size();
   if (remain_size > 0) {
     char* buffer = new char[remain_size];
     send_buffer_->read(buffer, remain_size);
@@ -142,7 +142,7 @@ void Connection::loop_send(string task_id) {
   while (true) {
     
     char *buffer = nullptr;
-    int n = 0;
+    uint64_t n = 0;
     {
       bool stop_send = false;
       std::unique_lock<std::mutex> lck(send_buffer_mtx_);
@@ -335,7 +335,7 @@ ssize_t Connection::recv(const string& id, char* data, uint64_t length, int64_t 
     });
     ret = buffer->read(data, length);
     mapbuffer_cv_.notify_all();
-    log_debug << node_id_ << " read mapbuffer, notify all " << id;
+    //log_debug << node_id_ << " read mapbuffer, notify all " << id;
     return ret;
   } while (true);
 
@@ -344,7 +344,6 @@ ssize_t Connection::recv(const string& id, char* data, uint64_t length, int64_t 
 }
 
 ssize_t Connection::peek(int sockfd, void* buf, size_t len) {
-  cout << __FUNCTION__ << " len:" << len << endl;
   while (1) {
     ssize_t ret = ::recv(sockfd, buf, len, MSG_PEEK);
     if (ret == -1 && errno == EINTR)
@@ -367,7 +366,6 @@ ssize_t Connection::readn(int connfd, char* vptr, size_t n) {
         nread = 0;
       } else {
         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-          //usleep(200);
           continue;
         }
         log_error << __FUNCTION__ << " errno:" << errno << " " << strerror(errno) ;

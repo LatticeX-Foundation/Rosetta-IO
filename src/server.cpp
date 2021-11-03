@@ -72,9 +72,9 @@ shared_ptr<Connection> TCPServer::find_connection(const string& cid) {
   iter->second->start(task_id_);
   return iter->second;
 }
-int TCPServer::get_unrecv_size() {
+uint64_t TCPServer::get_unrecv_size() {
   unique_lock<mutex> lck(connections_mtx_);
-  int ret = 0;
+  uint64_t ret = 0;
   for (auto iter = connections_.begin(); iter != connections_.end(); iter++) {
     ret += iter->second->get_unrecv_size();
   }
@@ -173,20 +173,20 @@ void TCPServer::handle_accept(Connection* conn) {
     throw socket_exp("accept failed");
   }
 
-  int32_t cid_len = -9999;
+  uint64_t cid_len = -9999;
   // recv client id from client
-  ssize_t ret = ::read(cfd, (char*)&cid_len, sizeof(int32_t));
-  if (ret != sizeof(int32_t)) {
-    log_error << "read cid error" << "ret: " << ret << " expected:" << sizeof(int32_t) ;
+  ssize_t ret = ::read(cfd, (char*)&cid_len, sizeof(uint64_t));
+  if (ret != sizeof(uint64_t)) {
+    log_error << "read cid error" << "ret: " << ret << " expected:" << sizeof(uint64_t) ;
     close(cfd);
     return;
   }
   log_debug << "cid len:" << cid_len ;
   string cid;
-  cid.resize(cid_len - sizeof(int32_t));
-  ret = ::read(cfd, &cid[0], cid_len - sizeof(int32_t));
-  if (ret != cid_len - sizeof(int32_t)) {
-    log_error << "read cid error " << "ret: " << ret << " expected:" << cid_len - sizeof(int32_t) << "cid_len:" << cid_len;
+  cid.resize(cid_len - sizeof(uint64_t));
+  ret = ::read(cfd, &cid[0], cid_len - sizeof(uint64_t));
+  if (ret != cid_len - sizeof(uint64_t)) {
+    log_error << "read cid error " << "ret: " << ret << " expected:" << cid_len - sizeof(uint64_t) << "cid_len:" << cid_len;
     close(cfd);
     return;
   }

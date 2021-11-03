@@ -30,14 +30,14 @@ namespace io {
 class simple_buffer {
  public:
   simple_buffer(const string& id, const char* data, uint64_t length) {
-    len_ = sizeof(int32_t) + sizeof(uint8_t) + id.size() + length;
+    len_ = sizeof(uint64_t) + sizeof(uint8_t) + id.size() + length;
     uint8_t id_len = sizeof(uint8_t) + id.size();
     buf_ = new char[len_];
     memset(buf_, 0, len_);
-    memcpy(buf_, (const char*)&len_, sizeof(int32_t));
-    memcpy(buf_ + sizeof(int32_t), (const char*)&id_len, sizeof(uint8_t));
-    memcpy(buf_ + sizeof(int32_t) + sizeof(uint8_t), (const char*)id.data(), id.size());
-    memcpy(buf_ + sizeof(int32_t) + sizeof(uint8_t) + id.size(), data, length);
+    memcpy(buf_, (const char*)&len_, sizeof(uint64_t));
+    memcpy(buf_ + sizeof(uint64_t), (const char*)&id_len, sizeof(uint8_t));
+    memcpy(buf_ + sizeof(uint64_t) + sizeof(uint8_t), (const char*)id.data(), id.size());
+    memcpy(buf_ + sizeof(uint64_t) + sizeof(uint8_t) + id.size(), data, length);
   }
 
   ~simple_buffer() {
@@ -53,12 +53,12 @@ class simple_buffer {
     return buf_;
   }
   
-  int32_t len() {
+  uint64_t len() {
     return len_;
   }
 
  private:
-  int32_t len_ = 0;
+  uint64_t len_ = 0;
   char* buf_ = nullptr;
 };
 

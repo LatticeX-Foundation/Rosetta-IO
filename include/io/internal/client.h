@@ -37,7 +37,7 @@ class TCPClient : public Socket {
   void setsid(const string& sid) { sid_ = sid; }
   void setsslid(const string& sslid) { sslid_ = sslid; }
   shared_ptr<Connection> get_connection() { return conn_; }
-  static int get_unrecv_size();
+  static uint64_t get_unrecv_size();
 
  public:
   /**

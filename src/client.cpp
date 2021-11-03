@@ -162,11 +162,11 @@ bool TCPClient::connect(int64_t timeout) {
     }
 
     string tmpcid;
-    int32_t cid_len = sizeof(int32_t) + cid_.size();
+    uint64_t cid_len = sizeof(uint64_t) + cid_.size();
     log_audit << "send node id:" << cid_ << " len:" << cid_len;
     tmpcid.resize(cid_len);
-    memcpy(&tmpcid[0], &cid_len, sizeof(int32_t));
-    memcpy((char*)&tmpcid[0] + sizeof(int32_t), cid_.data(), cid_.size());
+    memcpy(&tmpcid[0], &cid_len, sizeof(uint64_t));
+    memcpy((char*)&tmpcid[0] + sizeof(uint64_t), cid_.data(), cid_.size());
     ssize_t ret = ::write(fd_, (const char*)&tmpcid[0], cid_len);
     if (ret != cid_len) {
       log_error << "client send cid error. ret:" << ret << ", errno:" << errno ;
@@ -213,8 +213,8 @@ bool TCPClient::connect(int64_t timeout) {
   return false;
 }
 
-int TCPClient::get_unrecv_size() {
-  int ret = 0;
+uint64_t TCPClient::get_unrecv_size() {
+  uint64_t ret = 0;
   for (auto iter = connections_.begin(); iter != connections_.end(); iter++) {
     ret += iter->second->get_unrecv_size();
   }

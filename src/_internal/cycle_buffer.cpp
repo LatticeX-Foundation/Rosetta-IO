@@ -43,7 +43,7 @@ void cycle_buffer::reset() {
   remain_space_ = n_;
 }
 
-bool cycle_buffer::can_read(int32_t length) {
+bool cycle_buffer::can_read(uint64_t length) {
   std::unique_lock<std::mutex> lck(mtx_);
   return (n_ - remain_space_ >= length);
 }
@@ -58,7 +58,7 @@ bool cycle_buffer::can_remove(double t) {
   return false;
 }
 /////////////////////////////////////////
-int32_t cycle_buffer::peek(char* data, int32_t length) {
+int64_t cycle_buffer::peek(char* data, uint64_t length) {
   timer_.start();
   {
     unique_lock<mutex> lck(mtx_);
@@ -76,7 +76,7 @@ int32_t cycle_buffer::peek(char* data, int32_t length) {
       if (r_pos_ <= n_ - length) {
         memcpy(data, buffer_ + r_pos_, length);
       } else {
-        int first_n = n_ - r_pos_;
+        uint64_t first_n = n_ - r_pos_;
         memcpy(data, buffer_ + r_pos_, first_n);
         memcpy(data + first_n, buffer_, length - first_n);
       }
@@ -92,19 +92,19 @@ int32_t cycle_buffer::peek(char* data, int32_t length) {
 bool cycle_buffer::can_read() {
   unique_lock<mutex> lck(mtx_);
   //log_info << "can read remain data:" << n_ - remain_space_;
-  if (n_ - remain_space_ > sizeof(int32_t) + sizeof(uint8_t)) {
-    int len = 0;
+  if (n_ - remain_space_ > sizeof(uint64_t) + sizeof(uint8_t)) {
+    uint64_t len = 0;
     if (r_pos_ < w_pos_) {
-      len = *(int32_t*)(buffer_ + r_pos_);
+      len = *(uint64_t*)(buffer_ + r_pos_);
     } else {
-      char dlen[sizeof(int32_t)];
-      if (r_pos_ <= n_ - sizeof(int32_t)) {
-	      memcpy(dlen, buffer_ + r_pos_, sizeof(int32_t));
+      char dlen[sizeof(uint64_t)];
+      if (r_pos_ <= n_ - sizeof(uint64_t)) {
+	      memcpy(dlen, buffer_ + r_pos_, sizeof(uint64_t));
       } else {
 	      memcpy(dlen, buffer_ + r_pos_, n_ - r_pos_);
-	      memcpy(dlen + n_ - r_pos_, buffer_, sizeof(int32_t) - (n_ - r_pos_));
+	      memcpy(dlen + n_ - r_pos_, buffer_, sizeof(uint64_t) - (n_ - r_pos_));
       }
-        len = *(int32_t*)dlen;
+        len = *(uint64_t*)dlen;
     }
     //log_info << "remain data:" << n_ - remain_space_ << ", data size:" << len;
     if (n_ - remain_space_ >= len)
@@ -113,27 +113,27 @@ bool cycle_buffer::can_read() {
   return false;
 }
 
-int32_t cycle_buffer::read(string& id, string& data) {
-  if (n_ - remain_space_ > sizeof(int32_t) + sizeof(uint8_t)) {
+int64_t cycle_buffer::read(string& id, string& data) {
+  if (n_ - remain_space_ > sizeof(uint64_t) + sizeof(uint8_t)) {
     unique_lock<mutex> lck(mtx_);
-    int len = 0;
+    uint64_t len = 0;
     string tmp;
     if (r_pos_ < w_pos_) {
-      len = *(int32_t*)(buffer_ + r_pos_);
+      len = *(uint64_t*)(buffer_ + r_pos_);
       if (n_ - remain_space_ >= len) {
 	      tmp.resize(len);
 	      memcpy(&tmp[0], buffer_ + r_pos_, len);
       }
     } else {
-      char data_len[sizeof(int32_t)];
-      if (r_pos_ <= n_ - sizeof(int32_t)) {
-        memcpy(data_len, buffer_ + r_pos_, sizeof(int32_t));
+      char data_len[sizeof(uint64_t)];
+      if (r_pos_ <= n_ - sizeof(uint64_t)) {
+        memcpy(data_len, buffer_ + r_pos_, sizeof(uint64_t));
       } else {
-        int remain_len = n_ - r_pos_;
+        uint64_t remain_len = n_ - r_pos_;
         memcpy(data_len, buffer_ + r_pos_, remain_len);
-        memcpy(data_len + remain_len, buffer_, sizeof(int32_t) - remain_len);
+        memcpy(data_len + remain_len, buffer_, sizeof(uint64_t) - remain_len);
       }
-      len = *(int32_t*)data_len;
+      len = *(uint64_t*)data_len;
       if (n_ - remain_space_ >= len) {
 	      tmp.resize(len);
         if (n_ - r_pos_ >= len) {
@@ -144,12 +144,12 @@ int32_t cycle_buffer::read(string& id, string& data) {
         }
       }
     }
-    if (tmp.size() > sizeof(int32_t) + sizeof(uint8_t)) {
-      uint8_t len2 = *(uint8_t*)((char*)&tmp[0] + sizeof(int32_t));
+    if (tmp.size() > sizeof(uint64_t) + sizeof(uint8_t)) {
+      uint8_t len2 = *(uint8_t*)((char*)&tmp[0] + sizeof(uint64_t));
       id.resize(len2 - sizeof(uint8_t));
-      memcpy(&id[0], (char*)&tmp[0] + sizeof(int32_t) + sizeof(uint8_t), id.size());
-      data.resize(len - sizeof(int32_t) - len2);
-      memcpy(&data[0], (char*)&tmp[0] + sizeof(int32_t) + len2, data.size());
+      memcpy(&id[0], (char*)&tmp[0] + sizeof(uint64_t) + sizeof(uint8_t), id.size());
+      data.resize(len - sizeof(uint64_t) - len2);
+      memcpy(&data[0], (char*)&tmp[0] + sizeof(uint64_t) + len2, data.size());
       r_pos_ = (r_pos_ + len) % n_;
       remain_space_ += len;
       return tmp.size();
@@ -158,7 +158,7 @@ int32_t cycle_buffer::read(string& id, string& data) {
   return 0;
 }
 
-int32_t cycle_buffer::read(char* data, int32_t length) {
+int64_t cycle_buffer::read(char* data, uint64_t length) {
   timer_.start();
   {
     do {
@@ -180,7 +180,7 @@ int32_t cycle_buffer::read(char* data, int32_t length) {
         memcpy(data, buffer_ + r_pos_, length);
         r_pos_ += length;
       } else {
-        int first_n = n_ - r_pos_;
+        uint64_t first_n = n_ - r_pos_;
         memcpy(data, buffer_ + r_pos_, first_n);
         memcpy(data + first_n, buffer_, length - first_n);
         r_pos_ = length - first_n;
@@ -196,23 +196,23 @@ int32_t cycle_buffer::read(char* data, int32_t length) {
   return length;
 }
 
-void cycle_buffer::realloc(int32_t length) {
+void cycle_buffer::realloc(uint64_t length) {
   unique_lock<mutex> lck(mtx_);
   if (remain_space_ >= length) {
     return;
   }
 
   if (remain_space_ < length) {
-    int32_t new_n = n_ * ((length / n_) + 2); // at least 2x
+    uint64_t new_n = n_ * ((length / n_) + 2); // at least 2x
     log_debug << "buffer can not write. expected:" << length << ", actual:" << remain_space_
               << ". will expand from " << n_ << " to " << new_n ;
 
     char* newbuffer_ = new char[new_n];
-    int32_t havesize = size();
+    uint64_t havesize = size();
     if (w_pos_ > r_pos_) {
       memcpy(newbuffer_, buffer_ + r_pos_, havesize);
     } else {
-      int first_n = n_ - r_pos_;
+      uint64_t first_n = n_ - r_pos_;
       memcpy(newbuffer_, buffer_ + r_pos_, first_n);
       if (havesize - first_n > 0) {
         memcpy(newbuffer_ + first_n, buffer_, havesize - first_n);
@@ -229,7 +229,7 @@ void cycle_buffer::realloc(int32_t length) {
 }
 
 // data --> buffer_
-int32_t cycle_buffer::write(const char* data, int32_t length) {
+int64_t cycle_buffer::write(const char* data, uint64_t length) {
   timer_.start();
   {
     realloc(length);
@@ -249,7 +249,7 @@ int32_t cycle_buffer::write(const char* data, int32_t length) {
         memcpy(buffer_ + w_pos_, data, length);
         w_pos_ += length;
       } else {
-        int first_n = n_ - w_pos_;
+        uint64_t first_n = n_ - w_pos_;
         memcpy(buffer_ + w_pos_, data, first_n);
         memcpy(buffer_, data + first_n, length - first_n);
         w_pos_ = length - first_n;
