@@ -17,6 +17,7 @@
 // ==============================================================================
 #include "io/internal/cycle_buffer.h"
 #include "io/internal/logger.h"
+#include "io/internal/helper.h"
 
 #include <cstring>
 #include <iostream>
@@ -136,31 +137,8 @@ static string get_binary_string(const string& str) {
   }
   return ret;
 }
-static char get_hex_char(char p) {
-  if (p >= 0 && p <= 9) {
-    return '0' + p;
-  } else {
-    return 'A' + (p - 10);
-  }
-}
-static string get_hex_str(char p) {
-  char c1 = get_hex_char((unsigned char)(p) >> 4);
-  char c2 = get_hex_char(p & 0x0F);
-  char tmp[3] = {0};
-  tmp[0] = c1;
-  tmp[1] = c2;
-  return string(tmp);
-}
-static void print_str(const char* p, int len, const string& node_id) {
-  string str = "";
-  for (int i = 0; i < len; i++) {
-    str += get_hex_str(*p);
-    p++;
-  }
-  log_audit << "all recv data from " << node_id << ":" << str;
-}
 
-int64_t cycle_buffer::read(string& id, string& data) {
+int64_t cycle_buffer::read(string& id, string& data, const string& node_id) {
   if (n_ - remain_space_ > sizeof(uint64_t) + sizeof(uint8_t)) {
     unique_lock<mutex> lck(mtx_);
     uint64_t len = 0;
@@ -199,7 +177,8 @@ int64_t cycle_buffer::read(string& id, string& data) {
       memcpy(&data[0], (char*)&tmp[0] + sizeof(uint64_t) + len2, data.size());
       r_pos_ = (r_pos_ + len) % n_;
       remain_space_ += len;
-      print_str(tmp.data(), tmp.size(), node_id);
+      string hex_str = get_hex_buffer(tmp.data(), tmp.size());
+      log_audit << "all recv data from " << node_id << ": " << hex_str;
       return tmp.size();
     }
   }
