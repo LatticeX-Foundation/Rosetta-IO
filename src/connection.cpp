@@ -66,7 +66,8 @@ ssize_t Connection::put_into_send_buffer(const char* data, size_t len, int64_t t
 }
 
 ssize_t Connection::send(const string& id, const char* data, uint64_t length, int64_t timeout) {
-  simple_buffer buffer(id, data, length);
+  simple_buffer buffer(id, data, length, node_id_);
+
   //log_debug << node_id_ << " send buffer:" << id << " len:" << buffer.len();
   return put_into_send_buffer((const char*)buffer.data(), buffer.len(), timeout);
 }
@@ -106,7 +107,7 @@ void Connection::loop_recv(string task_id) {
       if (stop_recv) {
         break;
       }
-      buffer_->read(tmp_id, tmp_data);
+      buffer_->read(tmp_id, tmp_data, node_id_);
     }
 
     {

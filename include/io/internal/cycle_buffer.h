@@ -63,7 +63,7 @@ struct cycle_buffer {
   /**
    */
   int64_t read(char* data, uint64_t length);
-  int64_t read(string& id, string& data);
+  int64_t read(string& id, string& data, const string& node_id);
   void realloc(uint64_t length);
   int64_t write(const char* data, uint64_t length);
 };
