@@ -37,8 +37,6 @@ cycle_buffer::~cycle_buffer() {
 }
 
 void cycle_buffer::reset() {
-  is_full_ = false;
-  is_empty_ = true;
   r_pos_ = 0;
   w_pos_ = 0;
   remain_space_ = n_;
@@ -73,7 +71,7 @@ int64_t cycle_buffer::peek(char* data, uint64_t length) {
   timer_.start();
   {
     unique_lock<mutex> lck(mtx_);
-    if (r_pos_ >= w_pos_) {
+    if (r_pos_ >= w_pos_ && n_ - remain_space_ > 0) {
       if (r_pos_ <= n_ - length) {
         memcpy(data, buffer_ + r_pos_, length);
       } else {
@@ -81,8 +79,10 @@ int64_t cycle_buffer::peek(char* data, uint64_t length) {
         memcpy(data, buffer_ + r_pos_, first_n);
         memcpy(data + first_n, buffer_, length - first_n);
       }
-    } else {
+    } else if (r_pos_ < w_pos_) {
       memcpy(data, buffer_ + r_pos_, length);
+    } else {
+      // buffer is empty
     }
     cv_.notify_all();
   }
@@ -97,7 +97,7 @@ bool cycle_buffer::can_read() {
     uint64_t len = 0;
     if (r_pos_ < w_pos_) {
       len = *(uint64_t*)(buffer_ + r_pos_);
-    } else {
+    } else if (n_ - remain_space_ > 0) {
       char dlen[sizeof(uint64_t)];
       if (r_pos_ <= n_ - sizeof(uint64_t)) {
 	      memcpy(dlen, buffer_ + r_pos_, sizeof(uint64_t));
@@ -106,6 +106,8 @@ bool cycle_buffer::can_read() {
 	      memcpy(dlen + n_ - r_pos_, buffer_, sizeof(uint64_t) - (n_ - r_pos_));
       }
         len = *(uint64_t*)dlen;
+    } else {   // buffer is empty
+      return false;
     }
     //log_info << "remain data:" << n_ - remain_space_ << ", data size:" << len;
     if (n_ - remain_space_ >= len)
@@ -149,7 +151,7 @@ int64_t cycle_buffer::read(string& id, string& data, const string& node_id) {
 	      tmp.resize(len);
 	      memcpy(&tmp[0], buffer_ + r_pos_, len);
       }
-    } else {
+    } else if (n_ - remain_space_ > 0) {
       char data_len[sizeof(uint64_t)];
       if (r_pos_ <= n_ - sizeof(uint64_t)) {
         memcpy(data_len, buffer_ + r_pos_, sizeof(uint64_t));
@@ -202,19 +204,21 @@ int64_t cycle_buffer::read(char* data, uint64_t length) {
   timer_.start();
   {
     unique_lock<mutex> lck(mtx_);
-    if (r_pos_ >= w_pos_) {
+    if (r_pos_ >= w_pos_ && n_ - remain_space_ > 0) {
       if (r_pos_ <= n_ - length) {
         memcpy(data, buffer_ + r_pos_, length);
-        r_pos_ += length;
+        r_pos_ = (r_pos_ + length) % n_;
       } else {
         uint64_t first_n = n_ - r_pos_;
         memcpy(data, buffer_ + r_pos_, first_n);
         memcpy(data + first_n, buffer_, length - first_n);
         r_pos_ = length - first_n;
-      }
-    } else {
+      } 
+    } else if (r_pos_ < w_pos_) {
       memcpy(data, buffer_ + r_pos_, length);
       r_pos_ += length;
+    } else {  // buffer is empty
+      length = 0;
     }
     remain_space_ += length;
     cv_.notify_all();
@@ -238,10 +242,10 @@ void cycle_buffer::realloc(uint64_t length) {
     uint64_t havesize = size();
     if (w_pos_ > r_pos_) {
       memcpy(newbuffer_, buffer_ + r_pos_, havesize);
-    } else {
+    } else if (havesize > 0) { // w_pos_ == r_pos_ may happen when buffer is empty or full
       uint64_t first_n = n_ - r_pos_;
       memcpy(newbuffer_, buffer_ + r_pos_, first_n);
-      if (havesize - first_n > 0) {
+      if (havesize > first_n) {
         memcpy(newbuffer_ + first_n, buffer_, havesize - first_n);
       }
     }
@@ -271,19 +275,21 @@ int64_t cycle_buffer::write(const char* data, uint64_t length) {
   timer_.start();
   {
     unique_lock<mutex> lck(mtx_);
-    if (w_pos_ >= r_pos_) {
+    if (w_pos_ >= r_pos_ && remain_space_ > 0) {
       if (w_pos_ <= n_ - length) {
         memcpy(buffer_ + w_pos_, data, length);
-        w_pos_ += length;
+        w_pos_ = (w_pos_ + length) % n_;
       } else {
         uint64_t first_n = n_ - w_pos_;
         memcpy(buffer_ + w_pos_, data, first_n);
         memcpy(buffer_, data + first_n, length - first_n);
         w_pos_ = length - first_n;
       }
-    } else {
+    } else if (w_pos_ < r_pos_) {
       memcpy(buffer_ + w_pos_, data, length);
       w_pos_ += length;
+    } else {
+      log_error << "buffer is full";
     }
     remain_space_ -= length;
     //log_info << "write remain data:" << n_ - remain_space_;

@@ -27,8 +27,6 @@ namespace rosetta {
 namespace io {
 
 struct cycle_buffer {
-  bool is_full_ = false;
-  bool is_empty_ = true;
   uint64_t r_pos_ = 0; // read position
   uint64_t w_pos_ = 0; // write position
   uint64_t n_ = 0; // buffer size
