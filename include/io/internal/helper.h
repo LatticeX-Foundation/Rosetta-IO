@@ -19,6 +19,8 @@
 #include <string>
 using namespace std;
 
+#define PRINT_HEX_SIZE 128
+
 inline char get_hex_char(char p) {
   if (p >= 0 && p <= 9) {
     return '0' + p;
@@ -31,10 +33,14 @@ inline string get_hex_buffer(const void* buf, size_t size) {
   char tmp[8] = {0};
   char* p = (char*)buf;
   string s;
-  for (size_t i = 0; i < size; i++) {
+  size_t min_size = size < PRINT_HEX_SIZE ? size : PRINT_HEX_SIZE;
+  for (size_t i = 0; i < min_size; i++) {
     tmp[0] = get_hex_char((unsigned char)(p[i]) >> 4);
     tmp[1] = get_hex_char(p[i] & 0x0F);
     s.append(tmp);
+  }
+  if (min_size < size) {
+    s.append(3, '.');
   }
   return s;
 }
