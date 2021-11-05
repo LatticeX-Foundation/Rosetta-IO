@@ -25,7 +25,7 @@ inline char get_hex_char(char p) {
   if (p >= 0 && p <= 9) {
     return '0' + p;
   } else {
-    return 'A' + (p - 10);
+    return 'a' + (p - 10);
   }
 }
 
