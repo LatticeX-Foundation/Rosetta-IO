@@ -19,6 +19,7 @@
 #include <chrono>
 #include <thread>
 using namespace std::chrono;
+#define NEVER_TIMEOUT 1000 * 1000000
 
 namespace rosetta {
 namespace io {
@@ -30,7 +31,7 @@ int TCPClient::task_count_ = 0;
 std::mutex TCPClient::task_mtx_;
 std::condition_variable TCPClient::task_cv_;
 
-bool TCPClient::connect(int64_t timeout) {
+bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
   if (!init_ssl())
     return false;
 
@@ -85,7 +86,6 @@ bool TCPClient::connect(int64_t timeout) {
 
   ///////////////////////////////////////////
   //! @todo retries 3 times default
-  int conn_retries = 3;
   if (conn_retries <= 0)
     conn_retries = 1;
   for (int k = 0; k < conn_retries; k++) {
@@ -109,10 +109,8 @@ bool TCPClient::connect(int64_t timeout) {
     set_nodelay(fd_, 1);
     set_linger(fd_);
 
-    // timeout = netutil::client_init_timeout();
-    timeout = -1;
     if (timeout < 0)
-      timeout = 1000 * 1000000; // 100w s
+      timeout = NEVER_TIMEOUT; // 100w s
 
     //! in vm, connect api is not in blocking, even under blocking mode!!!
     int64_t elapsed = 0;
@@ -173,6 +171,17 @@ bool TCPClient::connect(int64_t timeout) {
       ::close(fd_);
       continue;
     }
+    
+    // recv ack
+    uint64_t ack_len = 0;
+    ret = ::read(fd_, (char*)&ack_len, sizeof(uint64_t));
+    if (ack_len != cid_len) {
+      log_error << "client recv ack error. ret:" << ret << ", error:" << errno;
+      ::close(fd_);
+      continue;
+    }
+
+    set_send_timeout(fd_, NEVER_TIMEOUT);
 
     if (is_ssl_socket_)
       conn_ = std::make_shared<SSLConnection>(fd_, 0, false, node_id_);

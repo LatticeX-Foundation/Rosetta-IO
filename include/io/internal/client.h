@@ -43,7 +43,7 @@ class TCPClient : public Socket {
   /**
    * \param timeout ms
    */
-  bool connect(int64_t timeout = -1L);
+  bool connect(int64_t timeout, int64_t conn_retries);
   void close();
   bool closed() { return !connected_; }
   bool is_first_connect() { return is_first_connect_; }

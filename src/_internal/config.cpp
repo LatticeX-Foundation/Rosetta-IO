@@ -305,6 +305,28 @@ bool ChannelConfig::parse_result(Document& doc) {
   return true;
 }
 
+bool ChannelConfig::parse_connect_params(Document& doc) {
+  if (doc.HasMember("CONNECT_PARAMS") && doc["CONNECT_PARAMS"].IsObject()) {
+    Value& connect_param = doc["CONNECT_PARAMS"];
+    if (connect_param.HasMember("TIMEOUT") && connect_param["TIMEOUT"].IsInt()) {
+      int timeout = connect_param["TIMEOUT"].GetInt();
+      if (timeout > 0) {
+        connect_timeout_ = timeout * 1000;
+      }
+    }
+
+    if (connect_param.HasMember("RETRIES") && connect_param["RETRIES"].IsInt()) {
+      int retries = connect_param["RETRIES"].GetInt();
+      if (retries > 0) {
+        connect_retries_ = retries;
+      }
+    }
+  }
+  log_debug << "connect timeout:" << connect_timeout_ << ", connect retries:" << connect_retries_;
+
+  return true;
+}
+
 void ChannelConfig::process_node_type() {
   pure_data_nodes_ = data_nodes_;
   pure_result_nodes_ = result_nodes_;
@@ -374,6 +396,11 @@ bool ChannelConfig::parse(Document& doc) {
 
   if (!parse_result(doc)) {
     log_error << "parse result error" ;
+    return false;
+  }
+
+  if (!parse_connect_params(doc)) {
+    log_error << "parse connect params error";
     return false;
   }
 

@@ -190,8 +190,17 @@ void TCPServer::handle_accept(Connection* conn) {
     close(cfd);
     return;
   }
+
   if (std::find(expected_cids_.begin(), expected_cids_.end(), cid) == expected_cids_.end()) {
     log_warn << "not really client. cid:" << cid ;
+    close(cfd);
+    return;
+  }
+
+    // send ack
+  ret = ::write(cfd, &cid_len, sizeof(cid_len));
+  if (ret != sizeof(cid_len)) {
+    log_error << "write cid len error " << " ret:" << ret << " expected:" << cid_len;
     close(cfd);
     return;
   }

@@ -63,12 +63,12 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
 
 #if USE_SSL_SOCKET // (USE_GMTASSL || USE_OPENSSL)
   if (netutil::is_enable_ssl_socket()) {
-    net_io = make_shared<rosetta::io::SSLParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback);
+    net_io = make_shared<rosetta::io::SSLParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
   } else {
-    net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback);
+    net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
   }
 #else
-  net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback);
+  net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
 #endif
 
   if (net_io->init()) {

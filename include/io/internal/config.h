@@ -108,6 +108,7 @@ class ChannelConfig {
   bool parse_data(Document& doc);
   bool parse_compute(Document& doc);
   bool parse_result(Document& doc);
+  bool parse_connect_params(Document& doc);
   void process_node_type();
 
  public:
@@ -123,6 +124,8 @@ class ChannelConfig {
   DataNodeConfig data_config_;
   ComputeNodeConfig compute_config_;
   ResultNodeConfig result_config_;
+  int connect_timeout_ = 10 * 1000; // ms
+  int connect_retries_ = 5;
 };
 
 }

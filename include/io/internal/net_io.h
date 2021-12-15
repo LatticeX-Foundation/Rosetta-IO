@@ -56,7 +56,7 @@ class BasicIO {
   virtual ~BasicIO();
   BasicIO() = default;
 
-  BasicIO(const string& task_id, const NodeInfo &node_id, const vector<NodeInfo>& client_infos, const vector<NodeInfo>& server_infos, error_callback error_callback);
+  BasicIO(const string& task_id, const NodeInfo &node_id, const vector<NodeInfo>& client_infos, const vector<NodeInfo>& server_infos, error_callback error_callback, const shared_ptr<ChannelConfig>& channel_config);
 
  protected:
   virtual bool init_inner() { return true; }
@@ -113,6 +113,7 @@ class BasicIO {
   map<string, shared_ptr<Connection>> connection_map;
   error_callback handler = nullptr;
   std::mutex clients_mtx_;
+  shared_ptr<ChannelConfig> channel_config_ = nullptr;
 };
 
 /**

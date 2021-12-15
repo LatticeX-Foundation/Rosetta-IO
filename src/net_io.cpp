@@ -45,8 +45,8 @@ BasicIO::~BasicIO() {
   close();
 }
 
-BasicIO::BasicIO(const string& task_id, const NodeInfo &node_id, const vector<NodeInfo>& client_infos, const vector<NodeInfo>& server_infos, error_callback error_callback)
-  : task_id_(task_id), node_info_(node_id), client_infos_(client_infos), server_infos_(server_infos), handler(error_callback) {}
+BasicIO::BasicIO(const string& task_id, const NodeInfo &node_id, const vector<NodeInfo>& client_infos, const vector<NodeInfo>& server_infos, error_callback error_callback, const shared_ptr<ChannelConfig>& channel_config)
+  : task_id_(task_id), node_info_(node_id), client_infos_(client_infos), server_infos_(server_infos), handler(error_callback), channel_config_(channel_config) {}
 
 bool BasicIO::init() {
 
@@ -105,9 +105,21 @@ bool BasicIO::init() {
         unique_lock<mutex> lck(clients_mtx_);
         clients.insert(std::pair<string, shared_ptr<TCPClient>>(i, client));
       }
-      if (!client->connect()) {
+      if (!client->connect(channel_config_->connect_timeout_, channel_config_->connect_retries_)) {
         init_client_ok = false;
         return false;
+      }
+
+      // and connection to connection map
+      {
+        shared_ptr<Connection> conn = clients[i]->get_connection() ;
+        connection_map[i] = conn;
+        if (clients[i]->is_first_connect()) {
+          server->add_connection_to_epoll(connection_map[i]);
+        }
+        if (conn == nullptr) {
+          log_error << "client get null connection " << i ;
+        }
       }
     }
     else if (cid_set.find(i) != cid_set.end()){
@@ -115,10 +127,22 @@ bool BasicIO::init() {
         usleep(2000);
       }
       log_debug << node_info_.id << " waited to be connected by " << i ;
+      
+      // and connection to connection map
+      {
+        shared_ptr<Connection> conn = server->get_connection(i);
+        if (conn == nullptr) {
+          log_error << "server get null connection " << i ;
+        }
+        connection_map[i] = conn;
+      }
     }
     return true;
   };
-
+   
+  for (int i = 0; i < expected_ids.size(); i++) {
+     connection_map.insert(std::pair<string, shared_ptr<Connection>>(expected_ids[i], nullptr));
+   }
   for (int i = 0; i < expected_ids.size(); i++) {
     client_threads[i] = thread(conn_f, expected_ids[i], i);
   }
@@ -129,27 +153,7 @@ bool BasicIO::init() {
 
   if (!init_client_ok)
     return false;
-  /////////////////////////////////////////////////////
-
-  for (int i = 0; i < expected_ids.size(); i++) {
-    if (sid_set.find(expected_ids[i]) != sid_set.end()) {
-      shared_ptr<Connection> conn = clients[expected_ids[i]]->get_connection() ;
-      connection_map.insert(std::pair<string, shared_ptr<Connection>>(expected_ids[i], conn));
-      if (clients[expected_ids[i]]->is_first_connect()) {
-        server->add_connection_to_epoll(connection_map[expected_ids[i]]);
-      }
-      if (conn == nullptr) {
-        log_error << "client get null connection " << i ;
-      }
-    } else if (cid_set.find(expected_ids[i]) != cid_set.end()) {
-      shared_ptr<Connection> conn = server->get_connection(expected_ids[i]);
-      if (conn == nullptr) {
-        log_error << "server get null connection " << i ;
-      }
-      connection_map.insert(std::pair<string, shared_ptr<Connection>>(expected_ids[i], conn));
-      //conn->start(task_id_);
-    }
-  }
+  
   return true;
 }
 
