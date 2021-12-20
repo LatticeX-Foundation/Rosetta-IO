@@ -115,11 +115,12 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
     //! in vm, connect api is not in blocking, even under blocking mode!!!
     int64_t elapsed = 0;
     auto beg = system_clock::now();
-    connected_ = false;
+    bool connected = false;
     while ((timeout < 0) || (elapsed <= timeout)) {
       if (timeout > 0) {
         int64_t tout = timeout - elapsed;
         set_send_timeout(fd_, tout);
+        set_recv_timeout(fd_, tout);
       } else {
         break;
       }
@@ -127,13 +128,13 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
       err = ::connect(fd_, (struct sockaddr*)&server, sizeof(server));
       if (err == 0) {
         log_debug << "client connect to server ok " << node_address;
-        connected_ = true;
+        connected = true;
         break;
       }
       // #define	EISCONN		106	/* Transport endpoint is already connected */
       if (errno == EISCONN) {
         log_error << "already connected:" << errno << " " << strerror(errno);
-        connected_ = true;
+        connected = true;
         break;
       }
 
@@ -146,7 +147,7 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
       elapsed = duration_cast<duration<int64_t, std::milli>>(end - beg).count();
     }
 
-    if (!connected_) {
+    if (!connected) {
       if (elapsed > timeout) {
         log_warn << "client[" << cid_ << "] connect to server[" << ip_ << ":" << port_
                  << "] timeout." ;
@@ -159,36 +160,48 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
       continue;
     }
 
+    // recv ack
+    auto beg_read = system_clock::now();
+    char connect_ack;
+    ssize_t ret = ::read(fd_, (char*)&connect_ack, sizeof(char));
+    if (ret != sizeof(char)) {
+      if (ret != 0) {
+        log_error << "client recv ack error. ret:" << ret << ", errno:" << errno << ", strerror:" <<  strerror(errno);
+      }
+      ::close(fd_);
+
+      auto end_read = system_clock::now();
+      auto read_elapsed = duration_cast<duration<int64_t, std::milli>>(end_read - beg_read).count();
+      auto sleep_time = (timeout / 1000) - read_elapsed;
+      log_error << "sleep time:" << sleep_time;
+      if (sleep_time > 0) {
+        std::this_thread::sleep_for(chrono::milliseconds(sleep_time));
+      }
+      continue;
+    }
+
     string tmpcid;
     uint64_t cid_len = sizeof(uint64_t) + cid_.size();
     log_audit << "send node id:" << cid_ << " len:" << cid_len;
     tmpcid.resize(cid_len);
     memcpy(&tmpcid[0], &cid_len, sizeof(uint64_t));
     memcpy((char*)&tmpcid[0] + sizeof(uint64_t), cid_.data(), cid_.size());
-    ssize_t ret = ::write(fd_, (const char*)&tmpcid[0], cid_len);
+    ret = ::write(fd_, (const char*)&tmpcid[0], cid_len);
     if (ret != cid_len) {
-      log_error << "client send cid error. ret:" << ret << ", errno:" << errno ;
-      ::close(fd_);
-      continue;
-    }
-    
-    // recv ack
-    uint64_t ack_len = 0;
-    ret = ::read(fd_, (char*)&ack_len, sizeof(uint64_t));
-    if (ack_len != cid_len) {
-      log_error << "client recv ack error. ret:" << ret << ", error:" << errno;
+      log_error << "client send cid error. ret:" << ret << ", errno:" << errno << " , strerror:" << strerror(errno);
       ::close(fd_);
       continue;
     }
 
     set_send_timeout(fd_, NEVER_TIMEOUT);
+    set_recv_timeout(fd_, NEVER_TIMEOUT);
 
     if (is_ssl_socket_)
       conn_ = std::make_shared<SSLConnection>(fd_, 0, false, node_id_);
     else
       conn_ = std::make_shared<Connection>(fd_, 0, false, node_id_);
     conn_->ctx_ = ctx_;
-
+    connected_ = true;
 
     set_nonblocking(fd_, true);
     if (conn_->handshake()) {

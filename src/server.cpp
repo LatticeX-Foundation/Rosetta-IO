@@ -172,10 +172,19 @@ void TCPServer::handle_accept(Connection* conn) {
     log_error << "accept failed. errno:" << errno << " " << strerror(errno) ;
     throw socket_exp("accept failed");
   }
+  
+  // send ack
+  char ack = '1';
+  ssize_t ret = ::write(cfd, &ack, sizeof(char));
+  if (ret != sizeof(char)) {
+    log_error << "write cid len error " << " ret:" << ret << " expected:" << sizeof(char);
+    close(cfd);
+    return;
+  }
 
   uint64_t cid_len = -9999;
   // recv client id from client
-  ssize_t ret = ::read(cfd, (char*)&cid_len, sizeof(uint64_t));
+  ret = ::read(cfd, (char*)&cid_len, sizeof(uint64_t));
   if (ret != sizeof(uint64_t)) {
     log_error << "read cid error" << "ret: " << ret << " expected:" << sizeof(uint64_t) ;
     close(cfd);
@@ -193,14 +202,6 @@ void TCPServer::handle_accept(Connection* conn) {
 
   if (std::find(expected_cids_.begin(), expected_cids_.end(), cid) == expected_cids_.end()) {
     log_warn << "not really client. cid:" << cid ;
-    close(cfd);
-    return;
-  }
-
-    // send ack
-  ret = ::write(cfd, &cid_len, sizeof(cid_len));
-  if (ret != sizeof(cid_len)) {
-    log_error << "write cid len error " << " ret:" << ret << " expected:" << cid_len;
     close(cfd);
     return;
   }
