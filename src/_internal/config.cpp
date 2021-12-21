@@ -322,7 +322,7 @@ bool ChannelConfig::parse_connect_params(Document& doc) {
       }
     }
   }
-  log_debug << "connect timeout:" << connect_timeout_ << ", connect retries:" << connect_retries_;
+  log_debug << "connect timeout:" << connect_timeout_ << "ms, connect retries:" << connect_retries_;
 
   return true;
 }

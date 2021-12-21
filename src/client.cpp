@@ -172,8 +172,8 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
 
       auto end_read = system_clock::now();
       auto read_elapsed = duration_cast<duration<int64_t, std::milli>>(end_read - beg_read).count();
-      auto sleep_time = (timeout / 1000) - read_elapsed;
-      log_error << "sleep time:" << sleep_time;
+      auto sleep_time = k < conn_retries - 1 ? timeout - read_elapsed : 0;
+      log_error << "read ack from " << node_id_ << " failed, sleep " << (sleep_time > 0 ? sleep_time : 0) << "ms, retries:" << (k + 1);
       if (sleep_time > 0) {
         std::this_thread::sleep_for(chrono::milliseconds(sleep_time));
       }
