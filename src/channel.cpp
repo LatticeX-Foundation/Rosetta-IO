@@ -59,6 +59,20 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
     g_creating_task.insert(task_id);
   }
   log_info << "begin create channel with task id " << task_id;
+  
+#if USE_EMP_IO
+  const char* ip = nullptr;
+  int port = 0;
+  if (serverInfos.size() > 0) {
+    assert(serverInfos.size() == 1);
+    ip = serverInfos[0].address.c_str();
+    port = serverInfos[0].port;
+  } else {
+    port = nodeInfo.port;
+  }
+  shared_ptr<emp::NetIO> net_io =  nullptr;
+  net_io = make_shared<emp::NetIO>(ip, port);
+#else
   shared_ptr<rosetta::io::BasicIO> net_io =  nullptr;
 
 #if USE_SSL_SOCKET // (USE_GMTASSL || USE_OPENSSL)
@@ -70,8 +84,13 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
 #else
   net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
 #endif
-
+#endif
+ 
+#if USE_EMP_IO
+  {
+#else
   if (net_io->init()) {
+#endif
     rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(net_io, nodeInfo.id, config);
     vector<string> connected_nodes(clientInfos.size() + serverInfos.size());
     for (int i = 0; i < clientInfos.size(); i++) {
