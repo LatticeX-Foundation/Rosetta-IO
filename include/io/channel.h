@@ -23,7 +23,6 @@
 #include <map>
 #include <functional>
 #include <cstdint>
-#include "cc/third_party/emp-toolkit/emp-tool/emp-tool/emp-tool.h"
 using namespace std;
 /**
  * @brief error_callback definition
