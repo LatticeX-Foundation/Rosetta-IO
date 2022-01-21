@@ -73,9 +73,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
   }
   if (task_id.find("#clone#") != string::npos) {
     int index = task_id.find("#clone#") + strlen("#clone#");
-    log_info << "task id:" << task_id << ", " << index;
     int task_id_index = atoi(task_id.substr(index).c_str());
-    log_info << "task id index:" << task_id_index;
     port += task_id_index;
   }
   shared_ptr<emp::NetIO> net_io =  nullptr;

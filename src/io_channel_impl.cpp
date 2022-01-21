@@ -66,10 +66,15 @@ ssize_t TCPChannel::Recv(const char* node_id, const char* id, char* data, uint64
 ssize_t TCPChannel::Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout) {
 #if USE_EMP_IO
   _net_io->send_data(data, length);
-  //_net_io->flush();
   return length;
 #else
   return _net_io->send(node_id, data, length, get_binary_string(id), timeout);
+#endif
+}
+
+void TCPChannel::Flush() {
+#if USE_EMP_IO
+  _net_io->flush();
 #endif
 }
 

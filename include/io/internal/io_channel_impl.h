@@ -67,6 +67,8 @@ class TCPChannel : public IChannel{
 
     virtual int64_t Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout = -1);
 
+    virtual void Flush();
+
     virtual const NodeIDVec* GetDataNodeIDs();
 
     virtual const NodeIDMap* GetComputationNodeIDs();
