@@ -78,6 +78,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
   }
   shared_ptr<emp::NetIO> net_io =  nullptr;
   net_io = make_shared<emp::NetIO>(ip, port);
+  log_info << "create emp io success";
 #else
   shared_ptr<rosetta::io::BasicIO> net_io =  nullptr;
 
@@ -90,14 +91,17 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
 #else
   net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
 #endif
+
+  log_info << "create rosetta io success";
 #endif
  
 #if USE_EMP_IO
   {
+    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(task_id, ip == nullptr ? "" : string(ip), port, net_io, nodeInfo.id, config);
 #else
   if (net_io->init()) {
+    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(task_id, net_io, nodeInfo.id, config);
 #endif
-    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(net_io, nodeInfo.id, config);
     vector<string> connected_nodes(clientInfos.size() + serverInfos.size());
     for (int i = 0; i < clientInfos.size(); i++) {
       connected_nodes[i] = clientInfos[i].id;
