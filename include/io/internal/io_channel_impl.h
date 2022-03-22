@@ -19,6 +19,7 @@
 
 #include "io/channel.h"
 #include "io/internal/config.h"
+#include "cc/third_party/emp-toolkit/emp-tool/emp-tool/emp-tool.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -30,6 +31,8 @@
 #include <thread>
 #include <vector>
 using namespace std;
+
+#define USE_EMP_IO 0
 
 /**
  * Users only need to include this one header file.
@@ -48,8 +51,13 @@ class BasicIO;
 
 class TCPChannel : public IChannel{
   public:
-    TCPChannel(shared_ptr<io::BasicIO> net_io, const string& node_id, shared_ptr<io::ChannelConfig> config)
-      : _net_io(net_io), node_id_(node_id), config_(config){ };
+#if USE_EMP_IO
+    TCPChannel(string task_id, string ip, int port, shared_ptr<emp::NetIO> net_io, const string& node_id, shared_ptr<io::ChannelConfig> config)
+      : _net_io(net_io), node_id_(node_id), config_(config), task_id_(task_id), ip_(ip), port_(port){ };
+#else
+    TCPChannel(string task_id, shared_ptr<io::BasicIO> net_io, const string& node_id, shared_ptr<io::ChannelConfig> config)
+      : _net_io(net_io), node_id_(node_id), config_(config), task_id_(task_id){ };
+#endif
 
     virtual ~TCPChannel();
 
@@ -58,6 +66,8 @@ class TCPChannel : public IChannel{
     virtual int64_t Recv(const char* node_id, const char* id, char* data, uint64_t length, int64_t timeout = -1);
 
     virtual int64_t Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout = -1);
+
+    virtual void Flush();
 
     virtual const NodeIDVec* GetDataNodeIDs();
 
@@ -82,11 +92,26 @@ class TCPChannel : public IChannel{
     
     const vector<string>& getConnectedNodeIDs();
 
+#if USE_EMP_IO
+    shared_ptr<emp::NetIO> GetSubIO(string id);
+#endif
+
   private:
+#if USE_EMP_IO
+    shared_ptr<emp::NetIO> _net_io = nullptr;
+    std::mutex msgid2io_mutex_;
+    map<string, shared_ptr<emp::NetIO>> msgid2io_;
+    map<string, int> msgid2port_;
+    string ip_;
+    int port_;
+    int port_offset = 100;
+#else
     shared_ptr<io::BasicIO> _net_io = nullptr;
+#endif
     shared_ptr<io::ChannelConfig> config_ = nullptr;
     vector<string> connected_nodes_;
     string node_id_;
+    string task_id_;
 
 };
 } // namespace io

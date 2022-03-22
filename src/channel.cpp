@@ -23,6 +23,7 @@
 #include "string.h"
 #include <mutex>
 #include "io/channel_encode.h"
+#include "cc/third_party/emp-toolkit/emp-tool/emp-tool/emp-tool.h"
 using namespace std;
 map<IChannel*, const char*> g_current_node_map;
 map<IChannel*, const NodeIDVec*> g_data_node_map;
@@ -59,6 +60,26 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
     g_creating_task.insert(task_id);
   }
   log_info << "begin create channel with task id " << task_id;
+  
+#if USE_EMP_IO
+  const char* ip = nullptr;
+  int port = 0;
+  if (serverInfos.size() > 0) {
+    assert(serverInfos.size() == 1);
+    ip = serverInfos[0].address.c_str();
+    port = serverInfos[0].port;
+  } else {
+    port = nodeInfo.port;
+  }
+  if (task_id.find("#clone#") != string::npos) {
+    int index = task_id.find("#clone#") + strlen("#clone#");
+    int task_id_index = atoi(task_id.substr(index).c_str());
+    port += task_id_index;
+  }
+  shared_ptr<emp::NetIO> net_io =  nullptr;
+  net_io = make_shared<emp::NetIO>(ip, port);
+  log_info << "create emp io success";
+#else
   shared_ptr<rosetta::io::BasicIO> net_io =  nullptr;
 
 #if USE_SSL_SOCKET // (USE_GMTASSL || USE_OPENSSL)
@@ -71,8 +92,16 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
   net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
 #endif
 
+  log_info << "create rosetta io success";
+#endif
+ 
+#if USE_EMP_IO
+  {
+    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(task_id, ip == nullptr ? "" : string(ip), port, net_io, nodeInfo.id, config);
+#else
   if (net_io->init()) {
-    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(net_io, nodeInfo.id, config);
+    rosetta::io::TCPChannel* tcp_channel = new rosetta::io::TCPChannel(task_id, net_io, nodeInfo.id, config);
+#endif
     vector<string> connected_nodes(clientInfos.size() + serverInfos.size());
     for (int i = 0; i < clientInfos.size(); i++) {
       connected_nodes[i] = clientInfos[i].id;

@@ -62,12 +62,97 @@ namespace rosetta {
 TCPChannel::~TCPChannel() {
 }
 
+#if USE_EMP_IO
+shared_ptr<emp::NetIO> TCPChannel::GetSubIO(string id) {
+  {
+    int new_port = 0;
+    // get port ty msg id
+    {
+      std::unique_lock<std::mutex> lck(msgid2io_mutex_);
+      auto iter = msgid2io_.find(id);
+      if (iter != msgid2io_.end()) {
+        return iter->second;  // find port by msg id
+      }
+      
+      if (ip_.empty()) {
+        new_port = port_ + port_offset;
+        port_offset++;
+         
+        // send msg id and port mapping to client
+        int id_len = id.size();
+        _net_io->send_data(&id_len, sizeof(id_len));
+        _net_io->send_data(id.data(), id_len);
+        _net_io->send_data(&new_port, sizeof(new_port));
+        _net_io->flush();
+      } else {
+        auto iter = msgid2port_.find(id);
+        if (iter != msgid2port_.end()) {
+          new_port = iter->second;   // find port by msg id
+        }
+
+        while (new_port == 0) {
+          int id_len = 0;
+          string recv_id;
+          int recv_port = 0;
+          // recv msg id and port mapping from server
+          _net_io->recv_data(&id_len, sizeof(id_len));
+          recv_id.resize(id_len);
+          _net_io->recv_data(&recv_id[0], id_len);
+          _net_io->recv_data(&recv_port, sizeof(recv_port));
+
+          if (id == recv_id) {
+            new_port = recv_port;
+          } else {
+            msgid2port_[recv_id] = recv_port;
+          }
+        }
+      }
+    }
+
+    shared_ptr<emp::NetIO> new_io = make_shared<emp::NetIO>(ip_.empty() ? nullptr : ip_.c_str(), new_port);
+
+    {
+      std::unique_lock<std::mutex> lck(msgid2io_mutex_);
+      msgid2io_[id] = new_io;
+    }
+    return new_io;
+  }
+}
+#endif
+
 ssize_t TCPChannel::Recv(const char* node_id, const char* id, char* data, uint64_t length, int64_t timeout) {
+#if USE_EMP_IO
+  if (task_id_.find("#clone#") != string::npos) {
+    _net_io->recv_data(data, length);
+  } else {
+    GetSubIO(string(id))->recv_data(data, length);
+  }
+  return length;
+#else
   return _net_io->recv(node_id, data, length, get_string(id), timeout); 
+#endif
 }
 
 ssize_t TCPChannel::Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout) {
+#if USE_EMP_IO
+  if (task_id_.find("#clone#") != string::npos) {
+    _net_io->send_data(data, length);
+  } else {
+    shared_ptr<emp::NetIO> io = GetSubIO(string(id));
+    io->send_data(data, length);
+    io->flush();
+  }
+  return length;
+#else
   return _net_io->send(node_id, data, length, get_string(id), timeout);
+#endif
+}
+
+void TCPChannel::Flush() {
+#if USE_EMP_IO
+  _net_io->flush();
+#endif
+>>>>>>> origin/main
 }
 
 const vector<string>& TCPChannel::getDataNodeIDs() {

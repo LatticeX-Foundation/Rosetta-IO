@@ -102,6 +102,11 @@ public:
   virtual int64_t Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout=-1) = 0;
 
   /**
+    *@brief flush all data to be sent
+    */
+  virtual void Flush() = 0;
+
+  /**
    * @brief get node id of all the data nodes
    * @return
    * return node id of all the data nodes
