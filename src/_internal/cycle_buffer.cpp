@@ -116,30 +116,6 @@ bool cycle_buffer::can_read() {
   return false;
 }
 
-static int get_hex_index(char c) {
-  if (c >= '0' && c <= '9') {
-    return c - '0';
-  } else if (c >= 'A' && c <= 'Z') {
-    return 10 + c - 'A';
-  } else if (c >= 'a' && c <= 'z') {
-    return 10 + c - 'a';
-  }
-  return 0;
-}
-
-static char get_char(char c1, char c2) {
-  return get_hex_index(c1) << 4 | get_hex_index(c2);
-}
-
-static string get_binary_string(const string& str) {
-  string ret;
-  ret.resize(str.size() / 2);
-  for (int i = 0; i < str.size(); i += 2) {
-    ret[i / 2] = get_char(str[i], str[i + 1]);
-  }
-  return ret;
-}
-
 int64_t cycle_buffer::read(string& id, string& data, const string& node_id) {
   if (n_ - remain_space_ > sizeof(uint64_t) + sizeof(uint8_t)) {
     unique_lock<mutex> lck(mtx_);

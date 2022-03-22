@@ -18,6 +18,11 @@
 #pragma once
 
 #include "io/channel.h"
+
+// the format of message identity is in hex if disabled
+// it can be transformed to binary format to reduce bytes transfered over network
+#define DEBUG_MSG_ID 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif

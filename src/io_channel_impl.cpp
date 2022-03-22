@@ -48,6 +48,14 @@ static string get_binary_string(const string& str) {
   return ret;
 }
 
+static string get_string(const char* s) {
+#if DEBUG_MSG_ID
+  return string(s);
+#else
+  return get_binary_string(s);
+#endif
+}
+
 
 namespace rosetta {
 
@@ -55,11 +63,11 @@ TCPChannel::~TCPChannel() {
 }
 
 ssize_t TCPChannel::Recv(const char* node_id, const char* id, char* data, uint64_t length, int64_t timeout) {
-  return _net_io->recv(node_id, data, length, get_binary_string(id), timeout); 
+  return _net_io->recv(node_id, data, length, get_string(id), timeout); 
 }
 
 ssize_t TCPChannel::Send(const char* node_id, const char* id, const char* data, uint64_t length, int64_t timeout) {
-  return _net_io->send(node_id, data, length, get_binary_string(id), timeout);
+  return _net_io->send(node_id, data, length, get_string(id), timeout);
 }
 
 const vector<string>& TCPChannel::getDataNodeIDs() {
