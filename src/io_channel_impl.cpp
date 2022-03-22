@@ -152,7 +152,6 @@ void TCPChannel::Flush() {
 #if USE_EMP_IO
   _net_io->flush();
 #endif
->>>>>>> origin/main
 }
 
 const vector<string>& TCPChannel::getDataNodeIDs() {
