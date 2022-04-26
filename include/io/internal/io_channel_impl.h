@@ -17,9 +17,14 @@
 // ==============================================================================
 #pragma once
 
+#define USE_EMP_IO 0
+
 #include "io/channel.h"
 #include "io/internal/config.h"
+
+#if USE_EMP_IO
 #include "cc/third_party/emp-toolkit/emp-tool/emp-tool/emp-tool.h"
+#endif
 
 #include <atomic>
 #include <condition_variable>
@@ -32,7 +37,6 @@
 #include <vector>
 using namespace std;
 
-#define USE_EMP_IO 0
 
 /**
  * Users only need to include this one header file.

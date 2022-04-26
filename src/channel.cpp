@@ -23,7 +23,11 @@
 #include "string.h"
 #include <mutex>
 #include "io/channel_encode.h"
+
+#if USE_EMP_IO
 #include "cc/third_party/emp-toolkit/emp-tool/emp-tool/emp-tool.h"
+#endif
+
 using namespace std;
 map<IChannel*, const char*> g_current_node_map;
 map<IChannel*, const NodeIDVec*> g_data_node_map;
