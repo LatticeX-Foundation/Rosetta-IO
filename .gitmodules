@@ -1,3 +1,4 @@
 [submodule "third_party/spdlog"]
 	path = third_party/spdlog
 	url = https://github.com/LatticeX-Foundation/Rosetta-LOG.git
+	branch = main
