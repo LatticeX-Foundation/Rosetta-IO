@@ -216,7 +216,7 @@ bool TCPClient::connect(int64_t timeout, int64_t conn_retries) {
       }
       is_first_connect_ = true;
       conn_->start(task_id_);
-      log_info << "client create connection ok " << node_address;
+      log_debug << "client create connection ok " << node_address;
       return true;
     }
 

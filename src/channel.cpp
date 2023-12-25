@@ -59,7 +59,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
     }
     g_creating_task.insert(task_id);
   }
-  log_info << "begin create channel with task id " << task_id;
+  log_debug << "begin create channel with task id " << task_id;
   
 #if USE_EMP_IO
   const char* ip = nullptr;
@@ -78,7 +78,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
   }
   shared_ptr<emp::NetIO> net_io =  nullptr;
   net_io = make_shared<emp::NetIO>(ip, port);
-  log_info << "create emp io success";
+  log_debug << "create emp io success";
 #else
   shared_ptr<rosetta::io::BasicIO> net_io =  nullptr;
 
@@ -92,7 +92,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
   net_io = make_shared<rosetta::io::ParallelNetIO>(task_id, nodeInfo, clientInfos, serverInfos, error_callback, config);
 #endif
 
-  log_info << "create rosetta io success";
+  log_debug << "create rosetta io success";
 #endif
  
 #if USE_EMP_IO
@@ -120,7 +120,7 @@ static IChannel* CreateChannel(const string& task_id, const rosetta::io::NodeInf
       g_creating_task.erase(iter);
       g_channel2task_cv.notify_all();
     }
-    log_info << "end create channel with task id " << task_id;
+    log_debug << "end create channel with task id " << task_id;
     return tcp_channel;
   }
   
@@ -207,14 +207,14 @@ void DestroyInternalChannel(IChannel* channel) {
     task_id = iter->second;
     g_channel2task.erase(iter);
   }
-  log_info << "begin destroy channel with task id " << task_id;
+  log_debug << "begin destroy channel with task id " << task_id;
   DestroyCurrentNode(channel);
   DestroyDataNodes(channel);
   DestroyComputationNodes(channel);
   DestroyResultNodes(channel);
   DestroyConnectedNodes(channel);
   delete channel;
-  log_info << "end destroy channel with task id " << task_id;
+  log_debug << "end destroy channel with task id " << task_id;
 }
 
 IChannel* CreateInternalChannel(const char* task_id, const char* node_id, const char* config_str, error_callback error_cb) {

@@ -42,7 +42,7 @@ void Connection::close(const string& task_id) {
     flush_send_buffer();
     ::close(fd_);
     state_ = Connection::State::Closed;
-    log_info << task_id << " close connection ok " << node_id_ << " send buffer size:" << send_buffer_->size();
+    log_debug << task_id << " close connection ok " << node_id_ << " send buffer size:" << send_buffer_->size();
   }
 }
 
@@ -289,7 +289,7 @@ void Connection::start(const string& task_id) {
 }
 
 void Connection::stop(const string& task_id) {
-  log_info << task_id << " begin stop connection with " << node_id_;
+  log_debug << task_id << " begin stop connection with " << node_id_;
   {
     std::unique_lock<std::mutex> lck(task_mtx_);
     task_count_--;
@@ -299,7 +299,7 @@ void Connection::stop(const string& task_id) {
     recv(id, &msg[0], msg.size(), -1);
   }
   do_stop(task_id);
-  log_info << task_id << " end stop connection with " << node_id_;
+  log_debug << task_id << " end stop connection with " << node_id_;
 }
 
 ssize_t Connection::recv(const string& id, char* data, uint64_t length, int64_t timeout) {

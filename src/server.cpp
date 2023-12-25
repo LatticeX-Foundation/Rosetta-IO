@@ -231,7 +231,7 @@ void TCPServer::handle_accept(Connection* conn) {
       connections_.erase(iter);
     }
     connections_.insert(std::pair<string, shared_ptr<Connection>>(cid, shared_ptr<Connection>(tc)));
-    log_info << "server create connection ok " << cid;
+    log_debug << "server create connection ok " << cid;
   }
   epoll_add(epollfd_, tc);
   epoll_mod(epollfd_, listen_conn_);
@@ -297,7 +297,7 @@ void TCPServer::handle_read(Connection* conn) {
     if (len > 0) { // Normal
       conn->write(main_buffer_, len);
     } else if (len == 0) { // EOF
-      log_error << "connection close";
+      log_debug << "connection close";
 
       epoll_del(epollfd_, conn);
       conn->close(task_id_);
@@ -364,7 +364,7 @@ void TCPServer::loop_main() {
     }
     listen_count_++;
   }
-  log_info << task_id_ << " begin loop epoll";
+  log_debug << task_id_ << " begin loop epoll";
   int64_t timeout = -1;
   if (timeout < 0)
     timeout = 1000 * 1000000;
@@ -404,7 +404,7 @@ void TCPServer::loop_main() {
       loop_once(epollfd_, 1000);
     }
   } else {
-    log_info << "client(s) connect to this server timeout, wait for closing..." ;
+    log_debug << "client(s) connect to this server timeout, wait for closing..." ;
   }
 
   // notify the listen thread of other tasks to handler epoll events
@@ -413,7 +413,7 @@ void TCPServer::loop_main() {
     listen_count_--;
     listen_cv_.notify_one();
   }
-  log_info << task_id_ << " end loop epoll";
+  log_debug << task_id_ << " end loop epoll";
 }
 
 bool TCPServer::init() {
@@ -472,7 +472,7 @@ bool TCPServer::start(const string& task_id, int port, error_callback handler_, 
 bool TCPServer::stop() {
   if (stop_)
     return true;
-  log_info << task_id_ << " begin stop server";
+  log_debug << task_id_ << " begin stop server";
   stop_ = 1;
   {
     std::unique_lock<std::mutex> lck(listen_mutex_);
@@ -516,7 +516,7 @@ bool TCPServer::stop() {
       log_debug << "server stopped!" ;
     }
   }
-  log_info << task_id_ << " end stop server";
+  log_debug << task_id_ << " end stop server";
   return true;
 }
 
